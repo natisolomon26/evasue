@@ -22,7 +22,7 @@ export const Campuses: React.FC = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setRow1(prev => cycleRowContent(prev)); // cycleRowContent returns CampusLogo[], which matches the state type
-    }, 1000); // 1 second
+    }, 5000); // 1 second
 
     return () => clearInterval(interval);
   }, []);
@@ -35,7 +35,7 @@ export const Campuses: React.FC = () => {
         // To slide left, we move the *last* item to the front
         return [prev[prev.length - 1], ...prev.slice(0, prev.length - 1)];
       });
-    }, 2000); // 2 seconds
+    }, 9000); // 2 seconds
 
     return () => clearInterval(interval);
   }, []);
@@ -44,7 +44,7 @@ export const Campuses: React.FC = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setRow3(prev => cycleRowContent(prev)); // cycleRowContent returns CampusLogo[], which matches the state type
-    }, 1000); // 1 second
+    }, 6000); // 1 second
 
     return () => clearInterval(interval);
   }, []);
