@@ -1,17 +1,20 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, HTMLMotionProps } from 'framer-motion';
 
 interface ButtonProps {
   children: React.ReactNode;
-  variant?: 'primary' | 'secondary' | 'outline';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   onClick?: () => void;
   className?: string;
   href?: string;
   type?: 'button' | 'submit' | 'reset';
 }
+
+type MotionProps = Pick<HTMLMotionProps<'button'>, 'whileHover' | 'whileTap' | 'transition'>;
+type MotionLinkProps = Pick<HTMLMotionProps<'a'>, 'whileHover' | 'whileTap' | 'transition'>;
 
 export const Button: React.FC<ButtonProps> = ({
   children,
@@ -22,31 +25,50 @@ export const Button: React.FC<ButtonProps> = ({
   href,
   type = 'button'
 }) => {
-  const baseClasses = "font-semibold transition-all duration-300 inline-flex items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white";
+  // Base classes (flat, rectangular)
+  const baseClasses = "font-semibold transition-all duration-200 inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2";
 
-  const variants = {
-    primary: "bg-brand-sky-600 text-white hover:bg-brand-sky-700 active:bg-brand-sky-800 focus:ring-brand-sky-500 shadow-sm hover:shadow-md",
-    secondary: "bg-brand-red-800 text-white hover:bg-brand-red-700 active:bg-brand-red-800 focus:ring-brand-red-500 shadow-sm hover:shadow-md",
-    outline: "bg-transparent text-brand-sky-600 border-2 border-brand-sky-600 hover:bg-brand-sky-50 hover:border-brand-sky-700 active:bg-brand-sky-100 focus:ring-brand-sky-500"
+  // Variant-specific classes for flat style
+  const variantsMap = {
+    primary: "bg-brand-primary-600 text-white focus:ring-brand-primary-500",
+    secondary: "bg-brand-accent-600 text-white focus:ring-brand-accent-500",
+    outline: "bg-transparent text-brand-primary-600 border border-brand-primary-600 focus:ring-brand-primary-500",
+    ghost: "bg-transparent text-brand-neutral-700 focus:ring-brand-neutral-500"
   };
 
-  const sizes = {
-    sm: "px-3 py-1.5 text-xs", // Made significantly smaller
-    md: "px-5 py-2.5 text-sm", // Slightly smaller base size
-    lg: "px-7 py-3 text-base"  // Slightly smaller large size
+  // Size-specific classes
+  const sizesMap = {
+    sm: "px-3 py-1.5 text-xs",
+    md: "px-4 py-2 text-sm",
+    lg: "px-6 py-3 text-base"
   };
 
-  const classes = `${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`;
+  const classes = `${baseClasses} ${variantsMap[variant]} ${sizesMap[size]} ${className}`;
+
+  // Unique click animation (rotate and scale)
+  const animationProps: MotionProps | MotionLinkProps = {
+    whileHover: { scale: 1.02 }, // Slight scale on hover
+    whileTap: { 
+      scale: 0.95,      // Scale down when pressed
+      rotate: 5         // Rotate slightly when pressed
+    },
+    transition: { 
+      type: "spring", 
+      stiffness: 400, 
+      damping: 17,
+      rotate: { // Specific transition for rotate
+        type: "tween",
+        duration: 0.2
+      }
+    }
+  };
 
   if (href) {
     return (
       <motion.a
         href={href}
         className={classes}
-        whileHover={{ scale: 1.03, y: -1 }} // Slight lift on hover
-        whileTap={{ scale: 0.98, y: 0 }}    // Slight press down when tapped
-        whileFocus={{ scale: 1.02 }}
-        transition={{ type: "spring", stiffness: 400, damping: 20 }}
+        {...animationProps}
       >
         {children}
       </motion.a>
@@ -58,10 +80,7 @@ export const Button: React.FC<ButtonProps> = ({
       type={type}
       className={classes}
       onClick={onClick}
-      whileHover={{ scale: 1.03, y: -1 }} // Slight lift on hover
-      whileTap={{ scale: 0.98, y: 0 }}    // Slight press down when tapped
-      whileFocus={{ scale: 1.02 }}
-      transition={{ type: "spring", stiffness: 400, damping: 20 }}
+      {...animationProps}
     >
       {children}
     </motion.button>

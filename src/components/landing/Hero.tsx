@@ -1,11 +1,274 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '../ui/Button';
 import { Container } from '../ui/Container';
 
+// Define the type for our floating element data
+type FloatingElementData = {
+  id: number;
+  width: number;
+  height: number;
+  top: number;
+  left: number;
+  floatDirection: number; // 1 for right/even, -1 for left/odd
+  duration: number; // Animation duration
+  shape: 'circle' | 'hexagon' | 'triangle' | 'smallCircle' | 'bigCircle'; // New shape property
+};
+
+// Function to generate random values (this will be called only once via useRef)
+const generateRandomElementData = (count: number): FloatingElementData[] => {
+  return Array.from({ length: count }, (_, i) => {
+    const width = Math.random() * 30 + 20; // Random size between 20-50px
+    const height = Math.random() * 30 + 20; // Random size between 20-50px
+    const top = Math.random() * 100; // Random vertical position (percentage)
+    const left = Math.random() * 100; // Random horizontal position (percentage)
+    const floatDirection = Math.random() > 0.5 ? 1 : -1; // Determine float direction
+    const duration = Math.random() * 6 + 4; // Random duration between 4-10s
+    // Randomly select a shape
+    const shapes: FloatingElementData['shape'][] = ['circle', 'hexagon', 'triangle', 'smallCircle', 'bigCircle'];
+    const shape = shapes[Math.floor(Math.random() * shapes.length)];
+
+    return {
+      id: i,
+      width,
+      height,
+      top,
+      left,
+      floatDirection,
+      duration,
+      shape, // Include the shape in the data
+    };
+  });
+};
+
+// Define the words for the typewriter effect
+const rotatingWords = ['Service', 'Leadership', 'Community', 'Faith'];
+
 export const Hero: React.FC = () => {
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [currentText, setCurrentText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [typingSpeed, setTypingSpeed] = useState(150); // Initial typing speed
+
+  // Use a ref to store the generated floating element data, generated only once
+  const floatingElementsDataRef = useRef<FloatingElementData[] | null>(null);
+  if (floatingElementsDataRef.current === null) {
+    floatingElementsDataRef.current = generateRandomElementData(6);
+  }
+  const floatingElementsData = floatingElementsDataRef.current;
+
+  // Typewriter effect logic
+  useEffect(() => {
+    const word = rotatingWords[currentWordIndex];
+    const fullWord = `into Lives of ${word}`;
+
+    if (isDeleting) {
+      // Deleting phase
+      if (currentText.length > 0) {
+        const timeout = setTimeout(() => {
+          setCurrentText(prev => prev.slice(0, -1));
+          setTypingSpeed(75); // Faster when deleting
+        }, typingSpeed);
+        return () => clearTimeout(timeout);
+      } else {
+        // Finished deleting, move to next word
+        setIsDeleting(false);
+        setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
+        setTypingSpeed(250); // Slight pause before typing next word
+      }
+    } else {
+      // Typing phase
+      if (currentText.length < fullWord.length) {
+        const timeout = setTimeout(() => {
+          setCurrentText(prev => fullWord.substring(0, prev.length + 1));
+          setTypingSpeed(150); // Standard typing speed
+        }, typingSpeed);
+        return () => clearTimeout(timeout);
+      } else {
+        // Finished typing, wait a bit then start deleting
+        const timeout = setTimeout(() => {
+          setIsDeleting(true);
+          setTypingSpeed(250); // Slight pause before deleting
+        }, 2000); // Pause for 2 seconds on the full word
+        return () => clearTimeout(timeout);
+      }
+    }
+  }, [currentText, isDeleting, currentWordIndex, typingSpeed]);
+
+  // Function to render the shape based on the 'shape' property
+  const renderShape = (data: FloatingElementData) => {
+    const baseStyle = {
+      width: `${data.width}px`,
+      height: `${data.height}px`,
+      top: `${data.top}%`,
+      left: `${data.left}%`,
+    };
+
+    // Apply backdrop blur and a subtle background for visibility against the image
+    const commonStyle = {
+      ...baseStyle,
+      background: 'rgba(11, 197, 221, 0.445)', // Semi-transparent white background
+      backdropFilter: 'blur(4px)', // Apply backdrop blur
+      WebkitBackdropFilter: 'blur(4px)', // For Safari
+      border: '1px solid rgba(0, 159, 252, 0.404)', // Subtle border
+    };
+
+    switch (data.shape) {
+      case 'circle':
+        // Use borderRadius for a circle
+        const circleStyle = { ...commonStyle, borderRadius: '50%' };
+        return (
+          <motion.div
+            key={data.id}
+            className="absolute"
+            style={circleStyle}
+            animate={{
+              y: [0, -30, 0],
+              x: [0, data.floatDirection * 20, 0],
+              opacity: [0.3, 0.7, 0.3],
+              scale: [1, 1.1, 1],
+              rotate: [0, 180, 360], // Add rotation for visual interest
+            }}
+            transition={{
+              duration: data.duration,
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "easeInOut",
+              delay: data.id * 0.5,
+            }}
+          />
+        );
+      case 'smallCircle':
+        // Override size for small circle and use borderRadius
+        const smallCircleStyle = { ...commonStyle, width: '15px', height: '15px', borderRadius: '50%' };
+        return (
+          <motion.div
+            key={data.id}
+            className="absolute"
+            style={smallCircleStyle}
+            animate={{
+              y: [0, -30, 0],
+              x: [0, data.floatDirection * 20, 0],
+              opacity: [0.3, 0.7, 0.3],
+              scale: [1, 1.1, 1],
+              rotate: [0, 180, 360],
+            }}
+            transition={{
+              duration: data.duration,
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "easeInOut",
+              delay: data.id * 0.5,
+            }}
+          />
+        );
+      case 'bigCircle':
+        // Override size for big circle and use borderRadius
+        const bigCircleStyle = { ...commonStyle, width: '45px', height: '45px', borderRadius: '50%' };
+        return (
+          <motion.div
+            key={data.id}
+            className="absolute"
+            style={bigCircleStyle}
+            animate={{
+              y: [0, -30, 0],
+              x: [0, data.floatDirection * 20, 0],
+              opacity: [0.3, 0.7, 0.3],
+              scale: [1, 1.1, 1],
+              rotate: [0, 180, 360],
+            }}
+            transition={{
+              duration: data.duration,
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "easeInOut",
+              delay: data.id * 0.5,
+            }}
+          />
+        );
+      case 'hexagon':
+        // Use clip-path for hexagon, no borderRadius
+        const hexagonStyle = { ...commonStyle, borderRadius: '0', clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' };
+        return (
+          <motion.div
+            key={data.id}
+            className="absolute"
+            style={hexagonStyle}
+            animate={{
+              y: [0, -30, 0],
+              x: [0, data.floatDirection * 20, 0],
+              opacity: [0.3, 0.7, 0.3],
+              scale: [1, 1.1, 1],
+              rotate: [0, 180, 360],
+            }}
+            transition={{
+              duration: data.duration,
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "easeInOut",
+              delay: data.id * 0.5,
+            }}
+          />
+        );
+      case 'triangle':
+        // Use clip-path for triangle, no borderRadius
+        const triangleStyle = { ...commonStyle, borderRadius: '0', clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' };
+        return (
+          <motion.div
+            key={data.id}
+            className="absolute"
+            style={triangleStyle}
+            animate={{
+              y: [0, -30, 0],
+              x: [0, data.floatDirection * 20, 0],
+              opacity: [0.3, 0.7, 0.3],
+              scale: [1, 1.1, 1],
+              rotate: [0, 180, 360],
+            }}
+            transition={{
+              duration: data.duration,
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "easeInOut",
+              delay: data.id * 0.5,
+            }}
+          />
+        );
+      default:
+        // Fallback to circle if shape is unknown
+        const defaultStyle = { ...commonStyle, borderRadius: '50%' };
+        return (
+          <motion.div
+            key={data.id}
+            className="absolute"
+            style={defaultStyle}
+            animate={{
+              y: [0, -30, 0],
+              x: [0, data.floatDirection * 20, 0],
+              opacity: [0.3, 0.7, 0.3],
+              scale: [1, 1.1, 1],
+              rotate: [0, 180, 360],
+            }}
+            transition={{
+              duration: data.duration,
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "easeInOut",
+              delay: data.id * 0.5,
+            }}
+          />
+        );
+    }
+  };
+
+
+  // Generate the floating elements using the pre-calculated data from the ref
+  const floatingElements = useMemo(() => {
+    return floatingElementsData.map(renderShape);
+  }, [floatingElementsData]); // Re-render floating elements only if the data changes (which it won't)
+
   return (
     <div className="relative h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image - Real Ethiopian Campus Life */}
@@ -15,23 +278,12 @@ export const Hero: React.FC = () => {
           backgroundImage: 'url("/bg-5.jpg")', // Replace with your real photo
         }}
       >
-        {/* Gradient Overlay - Deep Blue to Transparency */}
-        <div className="absolute inset-0 bg-gradient-to-r from-sky-900/90 via-sky-800/80 to-transparent"></div>
+        {/* Animated Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-sky-900/80 via-sky-800/70 to-transparent"></div>
       </div>
 
-      {/* Floating Abstract Elements (Subtle Pro Detail) */}
-      <motion.div 
-        className="hidden lg:block absolute top-1/4 left-10 w-32 h-32 border border-white/10 rounded-full"
-        animate={{ 
-          y: [0, -20, 0],
-          rotate: [0, 180, 360]
-        }}
-        transition={{ 
-          duration: 8,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-      />
+      {/* Enhanced Floating Abstract Elements (now uses pre-calculated data from ref) */}
+      {floatingElements}
 
       <Container className="relative z-10 text-white max-w-5xl mx-auto px-4 sm:px-6">
         <div className="space-y-8 text-center lg:text-left lg:space-y-6">
@@ -46,7 +298,7 @@ export const Hero: React.FC = () => {
             🇪🇹 Ethiopian Students • Faith • Leadership • Service
           </motion.div>
 
-          {/* Main Headline – Mission-Focused */}
+          {/* Main Headline – Mission-Focused with Typewriter */}
           <motion.h1 
             className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight max-w-4xl"
             initial={{ opacity: 0, y: 40 }}
@@ -55,7 +307,16 @@ export const Hero: React.FC = () => {
           >
             Helping Ethiopian Students Follow Christ
             <br />
-            <span className="text-yellow-400">into Lives of Service and Leadership</span>
+            <span className="text-yellow-400">
+              {/* Display the base text "into Lives of " */}
+              into Lives of{' '}
+              {/* Display the rotating part */}
+              <span className="inline-block min-w-[120px] text-left"> {/* Adjust min-width as needed */}
+                {currentText.replace('into Lives of ', '')}
+              </span>
+              {/* Optional Cursor */}
+              <span className="ml-1 inline-block w-0.5 h-8 bg-yellow-400 align-middle animate-pulse"></span>
+            </span>
           </motion.h1>
 
           {/* Subtitle – Emotional & Relational (Like CO) */}

@@ -8,52 +8,83 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Primary brand colors
+        // --- NEW YOUTH-FRIENDLY BRAND COLORS ---
+        'brand-primary': {
+          50: '#e0f7fa',  // Lightest teal
+          100: '#b2ebf2',
+          200: '#80deea',
+          300: '#4dd0e1',
+          400: '#26c6da',
+          500: '#00bcd4',  // Main primary teal
+          600: '#00acc1',
+          700: '#0097a7',
+          800: '#00838f',
+          900: '#006064',  // Darkest teal
+        },
+        'brand-accent': {
+          50: '#fff3e0',  // Lightest amber
+          100: '#ffe0b2',
+          200: '#ffcc80',
+          300: '#ffb74d',
+          400: '#ffa726',
+          500: '#ff9800',  // Main accent orange
+          600: '#fb8c00',
+          700: '#f57c00',
+          800: '#ef6c00',
+          900: '#e65100',  // Darkest orange
+        },
+        'brand-secondary': {
+          50: '#f3e5f5',  // Lightest purple
+          100: '#e1bee7',
+          200: '#ce93d8',
+          300: '#ba68c8',
+          400: '#ab47bc',
+          500: '#9c27b0',  // Main secondary purple
+          600: '#8e24aa',
+          700: '#7b1fa2',
+          800: '#6a1b9a',
+          900: '#4a148c',  // Darkest purple
+        },
+        'brand-neutral': {
+          50: '#fafafa',   // Lightest gray
+          100: '#f5f5f5',
+          200: '#eeeeee',
+          300: '#e0e0e0',
+          400: '#bdbdbd',
+          500: '#9e9e9e',   // Mid gray
+          600: '#757575',
+          700: '#616161',
+          800: '#424242',
+          900: '#212121',   // Darkest gray
+        },
+
+        // --- Keep some of the old names if you prefer, mapped to new colors ---
         'brand-sky': {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',  // Main sky-blue
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+          50: '#e0f7fa',
+          100: '#b2ebf2',
+          200: '#80deea',
+          300: '#4dd0e1',
+          400: '#26c6da',
+          500: '#00bcd4', // Now teal
+          600: '#00acc1',
+          700: '#0097a7',
+          800: '#00838f',
+          900: '#006064',
         },
         'brand-red': {
-          50: '#fef2f2',
-          100: '#fee2e2',
-          200: '#fecaca',
-          300: '#fca5a5',
-          400: '#f87171',
-          500: '#ef4444',  // Main red
-          600: '#dc2626',
-          700: '#b91c1c',
-          800: '#991b1b',
-          900: '#7f1d1d',
+          500: '#ff9800', // Now orange
+          600: '#fb8c00',
+          700: '#f57c00',
+          800: '#ef6c00',
+          900: '#e65100',
         },
-        
-        // Neutral colors for better contrast
-        'neutral': {
-          50: '#f8f9fa',
-          100: '#f1f3f5',
-          200: '#e9ecef',
-          300: '#dee2e6',
-          400: '#ced4da',
-          500: '#adb5bd',
-          600: '#6c757d',
-          700: '#495057',
-          800: '#343a40',
-          900: '#212529',
-        }
       },
       
-      // Add some gradient variations
+      // Keep or update gradients if needed
       backgroundImage: {
-        'sky-gradient': 'linear-gradient(135deg, #0ea5e9, #38bdf8)',
-        'red-gradient': 'linear-gradient(135deg, #ef4444, #f87171)',
-        'sky-red-gradient': 'linear-gradient(135deg, #0ea5e9, #ef4444)',
+        'primary-gradient': 'linear-gradient(135deg, theme("colors.brand-primary.500"), theme("colors.brand-primary.700"))',
+        'accent-gradient': 'linear-gradient(135deg, theme("colors.brand-accent.500"), theme("colors.brand-accent.700"))',
+        'secondary-gradient': 'linear-gradient(135deg, theme("colors.brand-secondary.500"), theme("colors.brand-secondary.700"))',
       },
       
       // Typography enhancements

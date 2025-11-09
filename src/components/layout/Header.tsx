@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image'; // Import Next.js Image component
 
 // Helper component for dropdown menus
 const DropdownMenu = ({ 
@@ -20,7 +21,7 @@ const DropdownMenu = ({
       onMouseEnter={() => setIsOpen(true)}
       onMouseLeave={() => setIsOpen(false)}
     >
-      <button className="text-gray-700 hover:text-brand-sky-600 font-medium transition-colors duration-200 px-4 py-2 flex items-center focus:outline-none">
+      <button className="text-gray-700 hover:text-brand-sky-600 font-medium transition-colors duration-200 px-3 py-1.5 flex items-center focus:outline-none rounded-md hover:bg-gray-50">
         {title}
         <svg className="w-4 h-4 ml-1 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -30,18 +31,18 @@ const DropdownMenu = ({
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border z-50"
+            className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
           >
-            <ul className="py-2">
+            <ul className="py-1">
               {items.map((item) => (
                 <li key={item.name}>
                   <Link
                     href={item.href}
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-brand-sky-50 hover:text-brand-sky-700 transition-colors duration-150"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-brand-sky-50 hover:text-brand-sky-700 transition-colors duration-150 rounded-md mx-1.5 first:mt-1 last:mb-1"
                   >
                     {item.name}
                   </Link>
@@ -87,39 +88,29 @@ export const Header: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo & Brand */}
           <Link href="/" className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-brand-sky-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-lg">E</span>
+            {/* Image Logo */}
+            <div className="relative w-20 h-10"> {/* Container for the image */}
+              <Image
+                src="/EvaSUELogo.png" // Update this path to your actual logo file
+                alt="Evasue Ethiopia Logo"
+                fill // This makes the image fill the container
+                style={{ objectFit: 'cover' }} // Ensures the image covers the area nicely
+                sizes="(max-width: 768px) 50px, (max-width: 1200px) 50px, 40px" // Optional: helps with responsive loading
+              />
             </div>
-            <div>
-              <span className="text-xl font-bold text-brand-sky-800">
-                Evasue <span className="text-brand-red-500">Ethiopia</span>
-              </span>
-              <p className="text-xs text-gray-500">Christian Student Fellowship</p>
-            </div>
+            
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-2">
+          <nav className="hidden md:flex items-center space-x-1">
             <DropdownMenu title="About Us" items={aboutUsItems} />
             <DropdownMenu title="Student Ministry" items={studentMinistryItems} />
             <DropdownMenu title="Join Us" items={joinUsItems} />
-
-            {/* Simple Links */}
-            <Link
-              href="/events"
-              className="flex items-center px-4 py-2 text-gray-700 hover:text-brand-sky-600 font-medium transition-colors duration-200"
-            >
-              Events
-            </Link>
-            <Link
-              href="/resources"
-              className="flex items-center px-4 py-2 text-gray-700 hover:text-brand-sky-600 font-medium transition-colors duration-200"
-            >
-              Resources
-            </Link>
+            
+            {/* Contact Link */}
             <Link
               href="/contact"
-              className="flex items-center px-4 py-2 text-gray-700 hover:text-brand-sky-600 font-medium transition-colors duration-200"
+              className="flex items-center px-3 py-1.5 text-gray-700 hover:text-brand-sky-600 font-medium transition-colors duration-200 rounded-md hover:bg-gray-50"
             >
               Contact
             </Link>
@@ -128,7 +119,7 @@ export const Header: React.FC = () => {
           {/* CTA Button - Desktop Only */}
           <div className="hidden md:block">
             <Link href="/join">
-              <button className="bg-brand-red-500 text-white px-6 py-2 rounded-lg hover:bg-brand-red-600 transition-colors duration-200 font-medium">
+              <button className="bg-brand-red-500 text-white px-5 py-2 rounded-full hover:bg-brand-red-600 transition-colors duration-200 font-medium text-sm">
                 Get Involved
               </button>
             </Link>
@@ -136,7 +127,7 @@ export const Header: React.FC = () => {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2"
+            className="md:hidden p-2 rounded-md hover:bg-gray-100"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -154,7 +145,7 @@ export const Header: React.FC = () => {
         <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div
-              className="md:hidden bg-white border-t"
+              className="md:hidden bg-white border-t border-gray-200"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
@@ -164,7 +155,7 @@ export const Header: React.FC = () => {
 
                 {/* About Us - Accordion-style */}
                 <details className="group">
-                  <summary className="flex justify-between items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded cursor-pointer list-none">
+                  <summary className="flex justify-between items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md cursor-pointer list-none">
                     <span>About Us</span>
                     <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -175,7 +166,7 @@ export const Header: React.FC = () => {
                       <li key={item.name}>
                         <Link
                           href={item.href}
-                          className="block px-3 py-2 text-sm text-gray-600 hover:bg-brand-sky-50 rounded"
+                          className="block px-3 py-2 text-sm text-gray-600 hover:bg-brand-sky-50 rounded-md"
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           {item.name}
@@ -187,7 +178,7 @@ export const Header: React.FC = () => {
 
                 {/* Student Ministry */}
                 <details className="group">
-                  <summary className="flex justify-between items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded cursor-pointer list-none">
+                  <summary className="flex justify-between items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md cursor-pointer list-none">
                     <span>Student Ministry</span>
                     <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -198,7 +189,7 @@ export const Header: React.FC = () => {
                       <li key={item.name}>
                         <Link
                           href={item.href}
-                          className="block px-3 py-2 text-sm text-gray-600 hover:bg-brand-sky-50 rounded"
+                          className="block px-3 py-2 text-sm text-gray-600 hover:bg-brand-sky-50 rounded-md"
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           {item.name}
@@ -210,7 +201,7 @@ export const Header: React.FC = () => {
 
                 {/* Join Us */}
                 <details className="group">
-                  <summary className="flex justify-between items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded cursor-pointer list-none">
+                  <summary className="flex justify-between items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md cursor-pointer list-none">
                     <span>Join Us</span>
                     <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -221,7 +212,7 @@ export const Header: React.FC = () => {
                       <li key={item.name}>
                         <Link
                           href={item.href}
-                          className="block px-3 py-2 text-sm text-gray-600 hover:bg-brand-sky-50 rounded"
+                          className="block px-3 py-2 text-sm text-gray-600 hover:bg-brand-sky-50 rounded-md"
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           {item.name}
@@ -231,27 +222,20 @@ export const Header: React.FC = () => {
                   </ul>
                 </details>
 
-                {/* Simple Links */}
-                {[
-                  { name: 'Events', href: '/events' },
-                  { name: 'Resources', href: '/resources' },
-                  { name: 'Contact', href: '/contact' }
-                ].map((link) => (
-                  <Link
-                    key={link.name}
-                    href={link.href}
-                    className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {link.name}
-                  </Link>
-                ))}
+                {/* Contact Link */}
+                <Link
+                  href="/contact"
+                  className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Contact
+                </Link>
 
                 {/* Mobile CTA */}
                 <div className="px-3 py-2">
                   <Link href="/join">
                     <button
-                      className="w-full bg-brand-red-500 text-white py-2 rounded-lg hover:bg-brand-red-600 transition-colors duration-200 font-medium"
+                      className="w-full bg-brand-red-500 text-white py-2 rounded-full hover:bg-brand-red-600 transition-colors duration-200 font-medium text-sm"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Get Involved
