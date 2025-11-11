@@ -60,7 +60,7 @@ export default function Header() {
     <header
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${
         hidden ? "-translate-y-full" : "translate-y-0"
-      } ${scrolled ? "bg-white/95 shadow-md" : "bg-transparent"}`}
+      } ${scrolled ? "bg-white/100 shadow-md" : "bg-transparent"}`}
     >
       <div className="container mx-auto flex items-center justify-between px-4 py-3 md:py-2">
         {/* Logo */}
@@ -78,7 +78,7 @@ export default function Header() {
         {/* Desktop Navigation and Give button - moved to right */}
         <div className="hidden md:flex items-center gap-2 lg:gap-3">
           {/* Navigation bar with dropdowns - only takes needed space */}
-          <div className="flex items-center rounded-full border border-gray-300 bg-white px-3 py-1 gap-1 lg:gap-2">
+          <div className="flex items-center rounded-full border border-sky-100 bg-white px-3 py-1 gap-1 lg:gap-2">
             {navItems.map((item) => (
               <div
                 key={item.label}
