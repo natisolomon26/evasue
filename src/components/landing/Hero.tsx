@@ -54,7 +54,7 @@ export default function Hero() {
           fill
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t bg-black/60 to-black/90"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-sky-900/50 via-sky-900/60 to-transparent"></div>
       </div>
 
       {/* Floating elements for extra visual interest */}
@@ -137,24 +137,32 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 1.6 }}
         >
           <Link
-            href="/chapters"
-            className="group relative overflow-hidden bg-gradient-to-r from-red-600 to-red-700 text-white px-5 py-4 rounded-full font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.03]"
-          >
-            
-              Join a community
-          </Link>
-          <Link
-            href="/about-us"
-            className="group relative overflow-hidden border-2 border-white text-white px-8 py-4 rounded-full font-semibold transition-all duration-300 hover:bg-white hover:text-gray-900 hover:shadow-lg"
-          >
-            <span className="relative z-10 flex items-center justify-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-              Learn about us
-            </span>
-            <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-          </Link>
+  href="/chapters"
+  className="group relative overflow-hidden bg-gradient-to-r from-red-600 to-red-700 text-white px-5 py-2.5 rounded-full font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.03] flex items-center justify-center gap-2"
+>
+  <span className="relative z-10 flex items-center gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+    </svg>
+    Join a community
+  </span>
+  <span className="absolute inset-0 bg-gradient-to-r from-red-700 to-red-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+  <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-ping"></span>
+</Link>
+
+<Link
+  href="/about-us"
+  className="group relative overflow-hidden border-2 border-white text-white px-5 py-2.5 rounded-full font-semibold transition-all duration-300 hover:bg-white hover:text-gray-900 hover:shadow-lg flex items-center justify-center gap-2"
+>
+  <span className="relative z-10 flex items-center gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+    </svg>
+    Learn about us
+  </span>
+  <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+  <span className="absolute -top-1 -left-1 w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-ping"></span>
+</Link>
         </motion.div>
 
         {/* Scroll indicator */}

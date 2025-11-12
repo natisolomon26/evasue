@@ -24,7 +24,7 @@ export default function AboutPage() {
   return (
     <section 
       ref={sectionRef}
-      className="w-full overflow-hidden bg-gray-50 px-4 py-8 md:py-16"
+      className="w-full overflow-hidden bg-gray-50"
     >
       {/* Floating decorative elements - only on desktop */}
       <motion.div 
@@ -71,7 +71,7 @@ export default function AboutPage() {
           {/* Light gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-white/80 to-white/10"></div>
           
-          <div className="relative z-10 flex flex-col justify-center h-full px-6 py-12 md:px-12 md:py-16">
+          <div className="relative z-10 flex flex-col justify-center h-full px-6 py-12 md:px-20 md:py-16">
             <motion.div
               variants={textVariants}
               initial="hidden"
