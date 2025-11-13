@@ -49,12 +49,12 @@ export default function Hero() {
       {/* Background Image + Gradient */}
       <div className="absolute inset-0">
         <Image
-          src="/images/bg1.jpg"
+          src="/images/bg-5.jpg"
           alt="Hero Background"
           fill
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-blue-700/50 via-blue-600/30 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-sky-900/50 via-sky-900/60 to-transparent"></div>
       </div>
 
       {/* Floating elements for extra visual interest */}

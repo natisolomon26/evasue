@@ -139,7 +139,7 @@ export default function AboutPage() {
             className="absolute inset-0"
           >
             <Image
-              src="/images/bg4.JPG"
+              src="/images/bg-5.jpg"
               alt="Follow and Witness Jesus"
               fill
               className="object-cover opacity-90"
