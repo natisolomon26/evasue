@@ -1,6 +1,7 @@
 import AboutPage from '@/components/landing/About';
 import FaithTeaser from '@/components/landing/FaithTeaser';
 import Hero from '@/components/landing/Hero';
+import Location from '@/components/landing/Location';
 
 export default function Home() {
   return (
@@ -8,6 +9,7 @@ export default function Home() {
       <Hero />
       <AboutPage />
       <FaithTeaser />
+      <Location />
     </div>
   );
 }

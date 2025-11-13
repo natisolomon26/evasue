@@ -111,7 +111,7 @@ export default function Header() {
         {/* Desktop Navigation and Give button - moved to right */}
         <div className="hidden md:flex items-center gap-3 lg:gap-4">
           {/* Navigation bar with dropdowns - only takes needed space */}
-          <div className="flex items-center rounded-full border border-sky-100 bg-white/90 backdrop-blur-sm px-4 py-1.5 gap-2 lg:gap-3">
+          <div className="flex items-center rounded-full border border-sky-100 bg-white/90 backdrop-blur-sm px-4 py-1 gap-2 lg:gap-3">
             {navItems.map((item) => (
               <div
                 key={item.label}
