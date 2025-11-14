@@ -24,23 +24,28 @@ export default function Header() {
   }, [lastScrollY]);
 
   const navItems = [
-    {
-      label: "About",
-      subMenu: [
-        "What we believe",
-        "Who we are",
-        "Leadership",
-        "General Secretary",
-        "History",
-      ],
-    },
-    {
-      label: "Student Ministry",
-      subMenu: ["Discipleship", "Leadership Dev't", "Evangelism and Mission"],
-    },
-    { label: "Events", link: "/events" },
-    { label: "Contact", link: "/contact" },
-  ];
+  {
+    label: "About",
+    subMenu: [
+      { label: "What we believe", link: "/page/about/believe" },
+      { label: "Who we are", link: "/about/who-we-are" },
+      { label: "Leadership", link: "/about/leadership" },
+      { label: "General Secretary", link: "/about/general-secretary" },
+      { label: "History", link: "/about/history" },
+    ],
+  },
+  {
+    label: "Student Ministry",
+    subMenu: [
+      { label: "Discipleship", link: "/student/discipleship" },
+      { label: "Leadership Dev't", link: "/student/leadership" },
+      { label: "Evangelism and Mission", link: "/student/evangelism" },
+    ],
+  },
+  { label: "Events", link: "/events" },
+  { label: "Contact", link: "/contact" },
+];
+
 
   // Framer Motion variants for dropdown - properly typed
   const dropdownVariants: Variants = {
@@ -158,11 +163,11 @@ export default function Header() {
                       <div className="py-2">
                         {item.subMenu.map((sub) => (
                           <Link
-                            key={sub}
-                            href="#"
+                            key={sub.label}
+                            href={sub.link}
                             className="block px-4 py-2 text-sm font-medium text-sky-800 hover:bg-sky-50 hover:text-sky-700 transition-colors duration-200"
                           >
-                            {sub}
+                            {sub.label}
                           </Link>
                         ))}
                       </div>
@@ -240,12 +245,12 @@ export default function Header() {
                       <div className="mt-2 space-y-1 pl-4 pr-2">
                         {item.subMenu.map((sub) => (
                           <Link
-                            key={sub}
-                            href="#"
+                            key={sub.label}
+                            href={sub.link}
                             className="block px-4 py-2 text-sm font-medium text-sky-700 hover:bg-sky-50 hover:text-sky-600 rounded-lg transition-colors duration-200"
                             onClick={() => setMobileMenuOpen(false)}
                           >
-                            {sub}
+                            {sub.label}
                           </Link>
                         ))}
                       </div>
