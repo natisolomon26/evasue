@@ -28,7 +28,7 @@ export default function Header() {
     label: "About",
     subMenu: [
       { label: "What we believe", link: "/page/about/believe" },
-      { label: "Who we are", link: "/about/who-we-are" },
+      { label: "Who we are", link: "/page/about/who-we-are" },
       { label: "Leadership", link: "/about/leadership" },
       { label: "General Secretary", link: "/about/general-secretary" },
       { label: "History", link: "/about/history" },
