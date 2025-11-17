@@ -17,21 +17,21 @@ export default function CoreValuesSection() {
       description:
         "We affirm Scripture as the revelation of God’s person and will, culminating in Jesus Christ. The Bible is our foundation for life and transformation.",
       image: "/images/bg1.jpg",
-      overlayColor: "from-sky-900/90 via-sky-800/70 to-sky-700/50",
+      overlayColor: "from-sky-900/90 via-sky-600/90 to-sky-700/50",
     },
     {
       title: "We are student focused",
       description:
         "EvaSUE exists for students. Our mission is to serve them so they can advance God’s Kingdom in their campuses and beyond.",
       image: "/images/bg2.JPG",
-      overlayColor: "from-green-900/90 via-green-800/70 to-green-700/50",
+      overlayColor: "from-green-900/90 via-green-600/70 to-green-500/50",
     },
     {
       title: "Our fellowship transcends differences",
       description:
         "We believe Christ unites us across denomination, ethnicity, language, and economy. In Him, we are one body.",
       image: "/images/bg3.JPG",
-      overlayColor: "from-red-900/90 via-red-800/70 to-red-700/50",
+      overlayColor: "from-red-900/90 via-red-600/70 to-red-500/50",
     },
   ];
 

@@ -88,12 +88,12 @@ export default function AboutPage() {
               
               {/* Heading */}
               <motion.h2
-                className="text-2xl md:text-4xl font-bold mb-4 text-sky-800 leading-tight"
+                className="text-2xl md:text-4xl font-bold mb-4 text-sky-600 leading-tight"
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                Students & <span className="text-sky-600">Graduates</span>
+                Students & <span className="text-red-400">Graduates</span>
               </motion.h2>
               
               {/* Body text */}
@@ -116,16 +116,16 @@ export default function AboutPage() {
               className="text-center md:text-left"
             >
               <Link
-                href="/students"
-                className="group relative inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-sky-600 to-sky-700 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden w-full md:w-auto"
+                href="/page/about/who-we-are"
+                className="group relative inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden w-full md:w-auto"
               >
                 <span className="relative z-10 flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
-                  Explore Our Students
+                  Explore More
                 </span>
-                <span className="absolute inset-0 bg-gradient-to-r from-sky-700 to-sky-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                <span className="absolute inset-0 bg-gradient-to-r from-red-700 to-red-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
                 <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-ping"></span>
               </Link>
             </motion.div>
@@ -195,7 +195,7 @@ export default function AboutPage() {
               className="text-center md:text-left"
             >
               <Link
-                href="/faith"
+                href="/page/about/believe"
                 className="group relative inline-flex items-center justify-center px-6 py-3 border-2 border-white text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden w-full md:w-auto"
               >
                 <span className="relative z-10 flex items-center gap-2">
