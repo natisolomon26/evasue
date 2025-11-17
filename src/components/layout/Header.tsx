@@ -37,8 +37,8 @@ export default function Header() {
   {
     label: "Student Ministry",
     subMenu: [
-      { label: "Discipleship", link: "/student/discipleship" },
-      { label: "Leadership Dev't", link: "/student/leadership" },
+      { label: "Discipleship", link: "/page/student/discipleship" },
+      { label: "Leadership Dev't", link: "/page/student/leadership" },
       { label: "Evangelism and Mission", link: "/student/evangelism" },
     ],
   },
