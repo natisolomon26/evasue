@@ -42,8 +42,18 @@ export default function Header() {
       { label: "Evangelism and Mission", link: "/student/evangelism" },
     ],
   },
+  {
+    label: "Department",
+    subMenu: [
+       { label: "Staff Cares & Development", link: "/staff" },
+       { label: "Evangelism and Mission", link: "/student/evangelism" },
+       { label: "Media Team", link: "/student/evangelism" },
+    ],
+  },
+  { label: "Department", link: "/contact" },
   { label: "Events", link: "/events" },
   { label: "Contact", link: "/contact" },
+  { label: "Login", link: "/contact" },
 ];
 
 
