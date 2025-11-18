@@ -48,7 +48,7 @@ export default function SmallGroup() {
         }}
       />
       <motion.div 
-        className="absolute bottom-1/4 right-1/4 w-32 h-32 bg-red-400/60 rounded-full blur-2xl"
+        className="absolute bottom-1/4 right-1/4 w-32 h-32 bg-green-300/50 rounded-full blur-2xl"
         animate={{
           y: [20, -20, 20],
           scale: [1, 1.1, 1]
@@ -88,7 +88,7 @@ export default function SmallGroup() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.5 }}
-              className="absolute bottom-8 left-8 right-8 bg-sky-800/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-white/30"
+              className="absolute bottom-8 left-8 right-8 bg-white/10 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-white/10"
             >
               <h3 className="text-lg font-bold text-white mb-2">Intimate Fellowship</h3>
               <p className="text-white text-sm">
@@ -181,19 +181,7 @@ export default function SmallGroup() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 1.3 }}
             >
-              <motion.button
-                whileHover={{ scale: 1.03, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
-                whileTap={{ scale: 0.98 }}
-                className="group relative overflow-hidden inline-flex items-center gap-3 px-7 py-3.5 bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                <span className="relative z-10 flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-                  </svg>
-                  Start a Small Group
-                </span>
-                <span className="absolute inset-0 bg-gradient-to-r from-red-700 to-red-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-              </motion.button>
+            
             </motion.div>
           </motion.div>
         </div>
