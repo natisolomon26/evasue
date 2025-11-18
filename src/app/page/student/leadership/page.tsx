@@ -11,7 +11,7 @@ export default function LeadershipPage() {
       <PageBanner
         title="Student Leadership"
         subtitle="Raising Christ-like leaders for campus, church, and society"
-        image="/images/bg4.JPG"
+        image="/images/bg3.JPG"
       />
 
       <StudentLeadership />
