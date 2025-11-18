@@ -47,7 +47,7 @@ export default function CTA() {
           </h2>
 
           {/* Description */}
-          <p className="text-white text-lg leading-relaxed">
+          <p className="text-white text-lg leading-relaxed text-justify">
             Join us as we inspire and equip students to follow Christ with
             purpose, live in authentic community, and transform campuses through
             radical love.

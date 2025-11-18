@@ -97,11 +97,11 @@ export default function AboutPage() {
               </motion.h2>
               
               {/* Body text */}
-              <p className="text-sky-700 text-sm md:text-base leading-relaxed mb-6 max-w-md mx-auto md:mx-0">
+              <p className="text-sky-700 text-sm md:text-base leading-relaxed mb-6 max-w-md mx-auto md:mx-0 text-justify">
                 <span className="font-semibold text-sky-800">Students</span> in EvaSUE are evangelical believers in secondary and tertiary educational institutions—both private and public. They are passionate disciples growing in faith, leadership, and mission across campuses.
               </p>
               
-              <p className="text-sky-700 text-sm md:text-base leading-relaxed mb-8 max-w-md mx-auto md:mx-0">
+              <p className="text-sky-700 text-sm md:text-base leading-relaxed mb-8 max-w-md mx-auto md:mx-0 text-justify">
                 <span className="font-semibold text-sky-800">Graduates</span> are former student members who continue their fellowship beyond university life. They serve as <em className="italic text-sky-600">Associates of EvaSUE</em>, actively engaging in ministries and mentoring the next generation to follow Christ in every area of life.
               </p>
             </motion.div>
@@ -176,11 +176,11 @@ export default function AboutPage() {
               </motion.h2>
               
               {/* Body text */}
-              <p className="text-sky-100 text-sm md:text-base leading-relaxed mb-6 max-w-md mx-auto md:mx-0">
+              <p className="text-sky-100 text-sm md:text-base leading-relaxed mb-6 max-w-md mx-auto md:mx-0 text-justify">
                 Jesus Christ is our Savior and Lord — saving us from sin and transforming our lives to reflect His image. Following Him means renewing our minds, imitating His life, and living for His purpose.
               </p>
               
-              <p className="text-sky-100 text-sm md:text-base leading-relaxed mb-8 max-w-md mx-auto md:mx-0">
+              <p className="text-sky-100 text-sm md:text-base leading-relaxed mb-8 max-w-md mx-auto md:mx-0 text-justify">
                 A true encounter with Jesus leads to witness — sharing the gospel in word and action, showing love, serving others, and caring for creation through the power of the Holy Spirit.
               </p>
             </motion.div>

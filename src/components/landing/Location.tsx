@@ -125,7 +125,7 @@ export default function Location() {
               transition={{ duration: 0.6, delay: 0.5 }}
               className="text-2xl md:text-3xl font-bold leading-tight"
             >
-              Our <span className="text-red-400">Global Impact</span>
+              Our <span className="text-red-400">Impact</span>
             </motion.h2>
 
             {/* Description */}
@@ -134,7 +134,7 @@ export default function Location() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className="text-sm md:text-base leading-relaxed text-sky-100"
+              className="text-sm md:text-base leading-relaxed text-sky-100 text-justify"
             >
               At EvaSUE, we are committed to spreading the gospel across campuses and
               communities. From universities to local fellowship groups, we empower

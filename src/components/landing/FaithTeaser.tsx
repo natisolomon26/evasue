@@ -80,7 +80,7 @@ export default function FaithTeaser() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.6, delay: 0.7 }}
-            className="text-gray-700 text-sm sm:text-base leading-relaxed mx-auto md:mx-0"
+            className="text-gray-700 text-sm sm:text-base leading-relaxed mx-auto md:mx-0 text-justify"
           >
             Imagine a place where your questions are welcomed, your doubts embraced,
             and your journey celebrated. At EvaSUE, you'll find the resources, connections,
