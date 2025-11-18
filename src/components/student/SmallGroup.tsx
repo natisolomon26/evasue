@@ -74,7 +74,7 @@ export default function SmallGroup() {
           >
             {/* Image with depth */}
             <Image
-              src="/images/bg1.jpg"
+              src="/images/small.JPG"
               alt="Small Group Ministry"
               fill
               className="object-cover"
