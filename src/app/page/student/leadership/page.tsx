@@ -1,4 +1,8 @@
-import LeadershipMinistry from "@/components/student/LeadershipMinistry";
+import BuildSkill from "@/components/student/BuildSkill";
+import MentorshipSection from "@/components/student/MentorshipSection";
+import ModelLeadership from "@/components/student/ModelLeadership";
+import SmallGroup from "@/components/student/SmallGroup";
+import StudentLeadership from "@/components/student/StudentLeadership";
 import PageBanner from "@/components/ui/PageBanner";
 
 export default function LeadershipPage() {
@@ -10,7 +14,11 @@ export default function LeadershipPage() {
         image="/images/bg4.JPG"
       />
 
-      <LeadershipMinistry />
+      <StudentLeadership />
+      <SmallGroup />
+      <MentorshipSection />
+      <ModelLeadership />
+      <BuildSkill />
     </>
   );
 }

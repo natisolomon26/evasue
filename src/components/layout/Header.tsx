@@ -50,7 +50,6 @@ export default function Header() {
        { label: "Media Team", link: "/student/evangelism" },
     ],
   },
-  { label: "Department", link: "/contact" },
   { label: "Events", link: "/events" },
   { label: "Contact", link: "/contact" },
   { label: "Login", link: "/contact" },
