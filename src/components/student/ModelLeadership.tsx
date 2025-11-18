@@ -1,116 +1,222 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef } from "react";
 import { Flame, Compass, Footprints, Star } from "lucide-react";
 
 export default function ModelLeadership() {
-  return (
-    <section className="relative py-24 bg-gradient-to-b from-white via-blue-50 to-sky-100 overflow-hidden">
+  const sectionRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start center", "end center"],
+  });
 
-      {/* Background glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-80 bg-sky-200/40 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-20 w-56 h-56 bg-blue-300/30 rounded-full blur-2xl" />
-      </div>
+  // Parallax effect for background elements
+  const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "10%"]);
+
+  const timelineItems = [
+    {
+      title: "Serving Beside Students",
+      description: "Staff workers demonstrate leadership through service, walking alongside students in day-to-day ministry — showing that true leadership is found in humble service.",
+      icon: <Footprints className="w-7 h-7 text-white/80" />,
+      color: "from-green-500 to-green-600",
+      position: "right" as const
+    },
+    {
+      title: "Guiding With Wisdom",
+      description: "Leaders model how to prayerfully navigate challenges, decisions, and ministry opportunities with biblical wisdom — leading with both heart and mind.",
+      icon: <Compass className="w-7 h-7 text-white/90" />,
+      color: "from-red-500 to-red-600",
+      position: "left" as const
+    },
+    {
+      title: "Teaching Servant Leadership",
+      description: "Students observe true leadership in action — service, humility, integrity, and Christlike compassion — learning that leadership is about lifting others.",
+      icon: <Flame className="w-7 h-7 text-white/80" />,
+      color: "from-yellow-500 to-yellow-600",
+      position: "right" as const
+    },
+  ];
+
+  return (
+    <section
+      ref={sectionRef}
+      className="relative py-24 bg-gradient-to-b from-slate-50 via-white to-sky-50 overflow-hidden"
+    >
+      {/* Floating Background Elements */}
+      <motion.div 
+        className="absolute inset-0 pointer-events-none"
+        style={{ y: backgroundY }}
+      >
+        <motion.div 
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-80 bg-sky-300/20 rounded-full blur-3xl"
+          animate={{
+            y: [-10, 10, -10],
+            scale: [1, 1.05, 1]
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        <motion.div 
+          className="absolute bottom-0 right-20 w-56 h-56 bg-blue-300/15 rounded-full blur-2xl"
+          animate={{
+            y: [15, -15, 15],
+            scale: [1, 1.1, 1]
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1
+          }}
+        />
+      </motion.div>
+
+      {/* Decorative floating elements */}
+      <motion.div 
+        className="absolute top-1/4 left-1/4 w-12 h-12 bg-sky-400/20 rounded-full blur-xl"
+        animate={{
+          y: [-15, 15, -15],
+          scale: [1, 1.1, 1]
+        }}
+        transition={{
+          duration: 5,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 0.5
+        }}
+      />
+      <motion.div 
+        className="absolute bottom-1/4 right-1/4 w-16 h-16 bg-orange-400/20 rounded-full blur-xl"
+        animate={{
+          y: [10, -10, 10],
+          scale: [1, 1.05, 1]
+        }}
+        transition={{
+          duration: 6,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 1.5
+        }}
+      />
 
       <div className="relative max-w-6xl mx-auto px-6">
         
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
+          transition={{ duration: 0.8, delay: 0.1 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-20"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1 bg-white shadow-sm border border-sky-200 rounded-full text-sky-700">
-            <Star className="w-4 h-4 text-yellow-500" />
-            Leadership in Service
-          </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/80 backdrop-blur-sm border border-sky-200/50 rounded-full text-sky-800 shadow-lg"
+          >
+            <Star className="w-4 h-4 text-yellow-500 animate-pulse" />
+            <span className="text-xs font-semibold uppercase tracking-wider">
+              Leadership in Service
+            </span>
+          </motion.div>
 
-          <h2 className="text-3xl md:text-4xl font-bold text-sky-900 mt-5">
-            Model Leadership in Service
-          </h2>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            viewport={{ once: true }}
+            className="text-3xl md:text-5xl font-bold text-sky-900 mt-6 leading-tight"
+          >
+            Model Leadership in <span className="text-blue-600">Service</span>
+          </motion.h2>
 
-          <p className="text-gray-600 max-w-2xl mx-auto mt-4">
-            Our Campus Staff Workers walk alongside student leaders, modeling 
-            Christ-like service and leadership in real campus ministry contexts.
-          </p>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+            viewport={{ once: true }}
+            className="text-gray-700 max-w-3xl mx-auto mt-6 text-lg leading-relaxed"
+          >
+            Our Campus Staff Workers walk alongside student leaders, modeling Christ-like service and leadership in real campus ministry contexts — demonstrating that true leadership is found in humble service to others.
+          </motion.p>
         </motion.div>
 
         {/* Vertical Timeline Section */}
-        <div className="relative max-w-3xl mx-auto">
-
+        <div className="relative max-w-4xl mx-auto">
           {/* Vertical Line */}
-          <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-sky-300 via-blue-400 to-sky-300 rounded-full" />
+          <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-sky-400/40 via-blue-500/50 to-sky-400/40 rounded-full shadow-lg" />
 
-          {/* ITEM 1 */}
-          <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7 }}
-            viewport={{ once: true }}
-            className="relative mb-20 flex items-center gap-8"
-          >
-            <div className="w-1/2 text-right">
-              <h4 className="text-xl font-bold text-sky-900">Serving Beside Students</h4>
-              <p className="text-gray-600 mt-2">
-                Staff workers demonstrate leadership through service, walking 
-                alongside students in day-to-day ministry.
-              </p>
-            </div>
+          {/* Timeline Items */}
+          {timelineItems.map((item, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, x: item.position === 'right' ? 50 : -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: index * 0.2 + 0.4 }}
+              viewport={{ once: true }}
+              className={`relative mb-24 flex items-center gap-8 ${item.position === 'right' ? 'flex-row' : 'flex-row-reverse'}`}
+            >
+              {/* Content Card */}
+              <div className={`w-5/12 ${item.position === 'right' ? 'text-left' : 'text-right'}`}>
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                  className="bg-white/90 backdrop-blur-sm shadow-xl rounded-2xl p-7 border border-slate-200/50 hover:shadow-2xl transition-all duration-300 relative overflow-hidden"
+                >
+                  {/* Gradient overlay */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-5 -z-10`}></div>
+                  
+                  <h4 className="text-xl font-bold text-sky-900 mb-3">
+                    {item.title}
+                  </h4>
+                  <p className="text-gray-700 leading-relaxed">
+                    {item.description}
+                  </p>
+                </motion.div>
+              </div>
 
-            {/* Icon at center line */}
-            <div className="absolute left-1/2 -translate-x-1/2 bg-white shadow-lg border border-sky-200 w-14 h-14 rounded-full flex items-center justify-center">
-              <Footprints className="w-7 h-7 text-sky-700" />
-            </div>
-          </motion.div>
-
-          {/* ITEM 2 */}
-          <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7 }}
-            viewport={{ once: true }}
-            className="relative mb-20 flex items-center gap-8"
-          >
-            {/* Icon */}
-            <div className="absolute left-1/2 -translate-x-1/2 bg-white shadow-lg border border-blue-200 w-14 h-14 rounded-full flex items-center justify-center">
-              <Compass className="w-7 h-7 text-blue-700" />
-            </div>
-
-            <div className="w-1/2 ml-auto">
-              <h4 className="text-xl font-bold text-sky-900">Guiding With Wisdom</h4>
-              <p className="text-gray-600 mt-2">
-                Leaders model how to prayerfully navigate challenges, decisions, 
-                and ministry opportunities with biblical wisdom.
-              </p>
-            </div>
-          </motion.div>
-
-          {/* ITEM 3 */}
-          <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7 }}
-            viewport={{ once: true }}
-            className="relative mb-20 flex items-center gap-8"
-          >
-            <div className="w-1/2 text-right">
-              <h4 className="text-xl font-bold text-sky-900">Teaching Servant Leadership</h4>
-              <p className="text-gray-600 mt-2">
-                Students observe true leadership in action — service, humility, 
-                integrity, and Christlike compassion.
-              </p>
-            </div>
-
-            {/* Icon */}
-            <div className="absolute left-1/2 -translate-x-1/2 bg-white shadow-lg border border-sky-200 w-14 h-14 rounded-full flex items-center justify-center">
-              <Flame className="w-7 h-7 text-orange-600" />
-            </div>
-          </motion.div>
-
+              {/* Icon at center line */}
+              <motion.div
+                initial={{ scale: 0 }}
+                whileInView={{ scale: 1 }}
+                transition={{ duration: 0.5, delay: index * 0.2 + 0.6 }}
+                className="absolute left-1/2 -translate-x-1/2 w-16 h-16 bg-white shadow-2xl border border-slate-200 rounded-full flex items-center justify-center z-10 group"
+              >
+                <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${item.color} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                  {item.icon}
+                </div>
+              </motion.div>
+            </motion.div>
+          ))}
         </div>
+
+        {/* Bottom CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 1.2 }}
+          viewport={{ once: true }}
+          className="text-center mt-16"
+        >
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="group relative inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-sky-500 to-sky-600 text-white font-semibold rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden"
+          >
+            <span className="relative z-10 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+              </svg>
+              Meet Our Staff
+            </span>
+            <span className="absolute inset-0 bg-gradient-to-r from-sky-600 to-sky-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+          </motion.button>
+        </motion.div>
       </div>
     </section>
   );
