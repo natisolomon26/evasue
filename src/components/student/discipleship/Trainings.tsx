@@ -173,10 +173,10 @@ export default function Trainings() {
                 ease: "easeOut"
               }}
               viewport={{ once: true, margin: "-100px" }}
-              className="relative group rounded-3xl overflow-hidden shadow-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-sky-400/30 transition-all duration-500"
+              className="relative group rounded-3xl overflow-hidden shadow-2xl h-96"
             >
-              {/* Background Image with parallax hover */}
-              <div className="absolute inset-0 overflow-hidden">
+              {/* Background Image */}
+              <div className="absolute inset-0">
                 <Image
                   src={item.img}
                   alt={item.title}
@@ -185,37 +185,31 @@ export default function Trainings() {
                 />
               </div>
 
-              {/* Animated gradient overlay */}
-              <div
-                className={`absolute inset-0 bg-gradient-to-br ${item.color} group-hover:opacity-90 transition-opacity duration-700`}
-              />
+              {/* Overlay gradient */}
+              <div className="absolute inset-0 bg-gradient-to-t from-sky-700 via-sky-900 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-              {/* Floating icon */}
-              <motion.div
-                initial={{ opacity: 0, y: 20, scale: 0.5 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.5, delay: i * 0.15 + 0.2 }}
-                className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-16 h-16 bg-gradient-to-br from-white/90 to-white/70 rounded-full shadow-2xl flex items-center justify-center text-2xl backdrop-blur-sm border border-white/30"
-              >
-                {item.icon}
-              </motion.div>
+              <div className="absolute inset-0 flex flex-col justify-end p-8 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileHover={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="backdrop-blur-md bg-white/10 rounded-2xl border border-white/20 shadow-lg p-6"
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-2xl">{item.icon}</span>
+                    <h3 className="text-xl font-bold text-white">
+                      {item.title}
+                    </h3>
+                  </div>
+                  <p className="text-gray-200 leading-relaxed text-sm">
+                    {item.desc}
+                  </p>
+                </motion.div>
+              </div>
 
-              {/* Glass Content Box */}
-              <motion.div
-                whileHover={{ y: -8 }}
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                className="relative z-20 p-7 backdrop-blur-md bg-white/10 rounded-2xl border border-white/20 shadow-lg mt-8"
-              >
-                <h3 className="text-2xl font-bold text-white drop-shadow-lg mb-3">
-                  {item.title}
-                </h3>
-                <p className="text-gray-200 leading-relaxed text-sm md:text-base">
-                  {item.desc}
-                </p>
-              </motion.div>
-
-              {/* Hover glow effect */}
-              <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-20 bg-gradient-to-br from-sky-400/30 to-purple-500/30 transition-opacity duration-500"></div>
+              <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
+                <span className="text-xs font-medium text-white">Training</span>
+              </div>
             </motion.div>
           ))}
         </div>
