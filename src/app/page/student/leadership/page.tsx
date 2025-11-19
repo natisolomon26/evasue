@@ -1,8 +1,8 @@
-import BuildSkill from "@/components/student/BuildSkill";
-import MentorshipSection from "@/components/student/MentorshipSection";
-import ModelLeadership from "@/components/student/ModelLeadership";
-import SmallGroup from "@/components/student/SmallGroup";
-import StudentLeadership from "@/components/student/StudentLeadership";
+import BuildSkill from "@/components/student/leadership/BuildSkill";
+import MentorshipSection from "@/components/student/leadership/MentorshipSection";
+import ModelLeadership from "@/components/student/leadership/ModelLeadership";
+import SmallGroup from "@/components/student/leadership/SmallGroup";
+import StudentLeadership from "@/components/student/leadership/StudentLeadership";
 import PageBanner from "@/components/ui/PageBanner";
 
 export default function LeadershipPage() {

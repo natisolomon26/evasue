@@ -1,4 +1,6 @@
 
+import BibleStudy from "@/components/student/discipleship/BibleStudy";
+import Small from "@/components/student/discipleship/Small";
 import DiscipleshipMinistry from "@/components/student/DiscipleshipMinistry";
 import PageBanner from "@/components/ui/PageBanner";
 
@@ -12,6 +14,8 @@ export default function Discipleship() {
       />
 
       <DiscipleshipMinistry />
+      <BibleStudy />
+      <Small />
     </>
   );
 }
