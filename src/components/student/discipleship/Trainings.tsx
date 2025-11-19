@@ -49,7 +49,7 @@ export default function Trainings() {
         style={{ y: shapesY }}
       >
         <motion.div 
-          className="absolute -top-20 left-10 w-72 h-72 bg-sky-500/15 rounded-full blur-3xl"
+          className="absolute -top-20 left-10 w-72 h-72 bg-yellow-500/20 rounded-full blur-3xl"
           animate={{
             y: [-15, 15, -15],
             scale: [1, 1.05, 1]
@@ -61,7 +61,7 @@ export default function Trainings() {
           }}
         />
         <motion.div 
-          className="absolute bottom-0 right-0 w-80 h-80 bg-purple-500/15 rounded-full blur-3xl"
+          className="absolute bottom-0 right-0 w-80 h-80 bg-purple-500/30 rounded-full blur-3xl"
           animate={{
             y: [15, -15, 15],
             scale: [1, 1.1, 1]
@@ -129,7 +129,7 @@ export default function Trainings() {
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg mb-8"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg mb-8"
           >
             <span className="w-2 h-2 bg-sky-400 rounded-full animate-pulse"></span>
             <span className="text-xs font-semibold text-sky-200 uppercase tracking-wider">
@@ -207,35 +207,15 @@ export default function Trainings() {
                 </motion.div>
               </div>
 
-              <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
+              <div className="absolute top-4 left-4 bg-red-600/90 backdrop-blur-sm px-3 py-1 rounded-full">
                 <span className="text-xs font-medium text-white">Training</span>
               </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Bottom CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
-          viewport={{ once: true, margin: "-100px" }}
-          className="text-center mt-20"
-        >
-          <motion.button
-            whileHover={{ scale: 1.05, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" }}
-            whileTap={{ scale: 0.95 }}
-            className="group relative inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-sky-600 to-purple-700 text-white font-semibold rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden"
-          >
-            <span className="relative z-10 flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-              </svg>
-              View All Trainings
-            </span>
-            <span className="absolute inset-0 bg-gradient-to-r from-purple-700 to-sky-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-          </motion.button>
-        </motion.div>
+        
+       
       </div>
     </section>
   );
