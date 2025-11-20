@@ -52,7 +52,7 @@ export default function Header() {
   },
   { label: "Events", link: "/page/events" },
   { label: "Contact", link: "/contact" },
-  { label: "Login", link: "/contact" },
+  { label: "Login", link: "/login" },
 ];
 
 
