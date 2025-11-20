@@ -35,7 +35,7 @@ export default function SignupPage() {
     }
 
     // Cookie is already set by backend
-    router.push("/profile");
+    router.push("/page/profile");
   }
 
   return (
