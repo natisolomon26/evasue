@@ -1,15 +1,27 @@
-// jwt.ts
+// src/lib/jwt.ts
 import jwt, { SignOptions, JwtPayload } from "jsonwebtoken";
 import { NextResponse } from "next/server";
+
+export interface AuthTokenPayload extends JwtPayload {
+  id: string;
+  email: string;
+  name?: string;
+}
 
 // ----------------------
 // SIGN JWT
 // ----------------------
-export const signJwt = (payload: object, expiresIn: string | number = "7d"): string => {
+export const signJwt = (
+  payload: AuthTokenPayload,
+  expiresIn: string | number = "7d"
+): string => {
   const JWT_SECRET = process.env.JWT_SECRET;
   if (!JWT_SECRET) throw new Error("❌ Missing JWT_SECRET");
 
-  const options: SignOptions = { expiresIn: expiresIn as SignOptions["expiresIn"] };
+  const options: SignOptions = {
+    expiresIn: expiresIn as SignOptions["expiresIn"],
+  };
+
   return jwt.sign(payload, JWT_SECRET, options);
 };
 
@@ -17,16 +29,17 @@ export const signJwt = (payload: object, expiresIn: string | number = "7d"): str
 // ----------------------
 // VERIFY JWT
 // ----------------------
-export const verifyJwt = (token: string): JwtPayload | null => {
+export const verifyJwt = (token: string): AuthTokenPayload | null => {
   const JWT_SECRET = process.env.JWT_SECRET;
   if (!JWT_SECRET) throw new Error("❌ Missing JWT_SECRET");
 
   try {
-    return jwt.verify(token, JWT_SECRET) as JwtPayload;
+    return jwt.verify(token, JWT_SECRET) as AuthTokenPayload;
   } catch {
-    return null;
+    return null; // invalid/expired token
   }
 };
+
 
 // ----------------------
 // SET COOKIE
@@ -36,10 +49,13 @@ export const setAuthCookie = (res: NextResponse, token: string) => {
     name: "auth_token",
     value: token,
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
     path: "/",
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: 60 * 60 * 24 * 7, // 7 days
   });
 };
+
 
 // ----------------------
 // CLEAR COOKIE

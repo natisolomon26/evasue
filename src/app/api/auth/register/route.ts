@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   try {
     await connectToDatabase();
 
-    const { name, email, password, role } = await req.json();
+    const { name, email, password, isAdmin } = await req.json();
 
     // Check if user exists
     const exists = await User.findOne({ email });
@@ -27,11 +27,15 @@ export async function POST(req: Request) {
       name,
       email,
       password: hashed,
-      role: role || "student",
+      isAdmin: isAdmin || false, // defaults to false
     });
 
-    // Sign JWT
-    const token = signJwt({ id: user._id, email: user.email, role:user.role });
+    // Sign JWT (NO role)
+    const token = signJwt({
+      id: user._id.toString(),
+      email: user.email,
+      isAdmin: user.isAdmin,
+    });
 
     // Create response
     const res = NextResponse.json(
