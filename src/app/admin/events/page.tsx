@@ -17,6 +17,7 @@ export default function EventsPage() {
     try {
       const res = await fetch("/api/events");
       const data = await res.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setEvents(data.events.map((e: any) => ({
         id: e._id,
         name: e.title,

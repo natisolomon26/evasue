@@ -1,66 +1,46 @@
-import { connectToDatabase } from "@/lib/mongoose";
+import { NextRequest, NextResponse } from "next/server";
 import Event from "@/models/Event";
-import { cookies } from "next/headers";
-import { verifyJwt } from "@/lib/jwt";
+import { authMiddleware } from "@/lib/authMiddleware";
 
-export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
-  const { id } = await context.params; // ← unwrap the promise
-
-  await connectToDatabase();
-
-  const event = await Event.findById(id);
-  if (!event) return Response.json({ error: "Event not found" }, { status: 404 });
-
-  return Response.json({ event });
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const event = await Event.findById(params.id).populate("createdBy", "name email");
+    if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    return NextResponse.json({ event });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Failed to fetch event" }, { status: 500 });
+  }
 }
 
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const user = authMiddleware(req, { requirePermission: { resource: "events", action: "update" } });
+    if (user instanceof NextResponse) return user;
 
-export async function PUT(
-  req: Request,
-  context: { params: Promise<{ id: string }> }
-) {
-  const { id } = await context.params;
+    const body = await req.json();
+    const event = await Event.findByIdAndUpdate(params.id, body, { new: true });
 
-  await connectToDatabase();
+    if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
 
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  if (!token) return Response.json({ error: "Unauthorized" }, { status: 401 });
-
-  const user = verifyJwt(token);
-  if (!user || user.role !== "admin") {
-    return Response.json({ error: "Only admin can update events" }, { status: 403 });
+    return NextResponse.json({ message: "Event updated", event });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Failed to update event" }, { status: 500 });
   }
-
-  const data = await req.json();
-
-  const updated = await Event.findByIdAndUpdate(id, data, { new: true });
-  if (!updated)
-    return Response.json({ error: "Event not found" }, { status: 404 });
-
-  return Response.json({ message: "Event updated", event: updated });
 }
 
-export async function DELETE(
-  req: Request,
-  context: { params: Promise<{ id: string }> }
-) {
-  const { id } = await context.params;
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const user = authMiddleware(req, { requirePermission: { resource: "events", action: "delete" } });
+    if (user instanceof NextResponse) return user;
 
-  await connectToDatabase();
+    const event = await Event.findByIdAndDelete(params.id);
+    if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
 
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  if (!token) return Response.json({ error: "Unauthorized" }, { status: 401 });
-
-  const user = verifyJwt(token);
-  if (!user || user.role !== "admin") {
-    return Response.json({ error: "Only admin can delete events" }, { status: 403 });
+    return NextResponse.json({ message: "Event deleted" });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Failed to delete event" }, { status: 500 });
   }
-
-  const deleted = await Event.findByIdAndDelete(id);
-  if (!deleted)
-    return Response.json({ error: "Event not found" }, { status: 404 });
-
-  return Response.json({ message: "Event deleted" });
 }

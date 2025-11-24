@@ -3,21 +3,24 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface IEvent extends Document {
   title: string;
-  description?: string;
-  eventDate: Date;
-  createdBy: string;
+  description: string;
+  date: Date;
+  location: string;
+  createdBy: string; // user id
   createdAt: Date;
+  updatedAt: Date;
 }
 
-const EventSchema = new Schema<IEvent>({
-  title: { type: String, required: true },
-  description: { type: String, default: "" },
-  eventDate: { type: Date, required: true },
-  createdBy: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now },
-});
+const EventSchema = new Schema<IEvent>(
+  {
+    title: { type: String, required: true },
+    description: { type: String, default: "" },
+    date: { type: Date, required: true },
+    location: { type: String, default: "" },
+    createdBy: { type: String, required: true },
+  },
+  { timestamps: true }
+);
 
-const Event: Model<IEvent> =
-  (mongoose.models.Event as Model<IEvent>) || mongoose.model<IEvent>("Event", EventSchema);
-
+const Event: Model<IEvent> = mongoose.models.Event || mongoose.model<IEvent>("Event", EventSchema);
 export default Event;
