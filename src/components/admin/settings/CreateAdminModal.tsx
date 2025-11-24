@@ -1,137 +1,187 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { motion } from "framer-motion";
 import { useState } from "react";
+
+interface Permission {
+  create: boolean;
+  read: boolean;
+  update: boolean;
+  delete: boolean;
+}
+
+interface UserPermissions {
+  events: Permission;
+  newsletter: Permission;
+  emails: Permission;
+  materials: Permission;
+}
 
 interface CreateAdminModalProps {
   open: boolean;
-  setOpen: (open: boolean) => void;
+  setOpen: (val: boolean) => void;
 }
 
-type Permissions = {
-  [key: string]: {
-    create: boolean;
-    read: boolean;
-    update: boolean;
-    delete: boolean;
-  };
-};
-
 export default function CreateAdminModal({ open, setOpen }: CreateAdminModalProps) {
-  const [form, setForm] = useState({
+  const [data, setData] = useState({
     name: "",
     email: "",
     password: "",
+    role: "admin", // default role
     permissions: {
-      events: { create: false, read: false, update: false, delete: false },
-      newsletter: { create: false, read: false, update: false, delete: false },
-      email: { create: false, read: false, update: false, delete: false },
-      materials: { create: false, read: false, update: false, delete: false },
-    } as Permissions,
+      events: { create: false, read: true, update: false, delete: false },
+      newsletter: { create: false, read: true, update: false, delete: false },
+      emails: { create: false, read: true, update: false, delete: false },
+      materials: { create: false, read: true, update: false, delete: false },
+    } as UserPermissions,
   });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   if (!open) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Admin to create:", form);
-    // TODO: connect to backend API
-    setOpen(false);
-  };
-
-  const togglePermission = (category: string, type: keyof Permissions[string]) => {
-    setForm({
-      ...form,
+  const handlePermissionChange = (
+    module: keyof UserPermissions,
+    type: keyof Permission
+  ) => {
+    setData((prev) => ({
+      ...prev,
       permissions: {
-        ...form.permissions,
-        [category]: {
-          ...form.permissions[category],
-          [type]: !form.permissions[category][type],
-        },
+        ...prev.permissions,
+        [module]: { ...prev.permissions[module], [type]: !prev.permissions[module][type] },
       },
-    });
+    }));
   };
 
-  const categories = Object.keys(form.permissions);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/admin/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // token from superadmin login
+        },
+        body: JSON.stringify(data),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        setError(json.error || "Failed to create user");
+        setLoading(false);
+        return;
+      }
+
+      // Reset form
+      setData({
+        name: "",
+        email: "",
+        password: "",
+        role: "admin",
+        permissions: {
+          events: { create: false, read: true, update: false, delete: false },
+          newsletter: { create: false, read: true, update: false, delete: false },
+          emails: { create: false, read: true, update: false, delete: false },
+          materials: { create: false, read: true, update: false, delete: false },
+        },
+      });
+
+      setOpen(false);
+      alert("User created successfully!");
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Server error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const modules = ["events", "newsletter", "emails", "materials"] as (keyof UserPermissions)[];
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="bg-white p-6 rounded-xl w-[500px] max-h-[90vh] overflow-auto"
-      >
-        <h2 className="text-xl font-bold mb-4">Create Admin</h2>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl p-6 w-full max-w-lg">
+        <h2 className="text-2xl font-bold mb-4">Create Admin/Staff</h2>
+
+        {error && <p className="text-red-600 mb-2">{error}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Basic Info */}
           <input
             type="text"
             placeholder="Full Name"
-            className="border w-full p-2 rounded-lg"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            value={data.name}
+            onChange={(e) => setData({ ...data, name: e.target.value })}
+            className="w-full p-3 border rounded-lg"
             required
           />
           <input
             type="email"
             placeholder="Email"
-            className="border w-full p-2 rounded-lg"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            value={data.email}
+            onChange={(e) => setData({ ...data, email: e.target.value })}
+            className="w-full p-3 border rounded-lg"
             required
           />
           <input
             type="password"
             placeholder="Password"
-            className="border w-full p-2 rounded-lg"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            value={data.password}
+            onChange={(e) => setData({ ...data, password: e.target.value })}
+            className="w-full p-3 border rounded-lg"
             required
           />
 
+          <select
+            value={data.role}
+            onChange={(e) => setData({ ...data, role: e.target.value })}
+            className="w-full p-3 border rounded-lg"
+          >
+            <option value="admin">Admin</option>
+            <option value="staff">Staff</option>
+          </select>
+
           {/* Permissions */}
-          <div className="border-t pt-3 space-y-4">
-            <h3 className="font-semibold">Access Rights</h3>
-            {categories.map((cat) => (
-              <div key={cat} className="space-y-1">
-                <p className="font-medium">{cat.charAt(0).toUpperCase() + cat.slice(1)}</p>
-                <div className="flex gap-4 flex-wrap">
-                  {["create", "read", "update", "delete"].map((perm) => (
-                    <label key={perm} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={form.permissions[cat][perm as keyof Permissions[string]]}
-                        onChange={() =>
-                          togglePermission(cat, perm as keyof Permissions[string])
-                        }
-                      />
-                      <span className="capitalize">{perm}</span>
-                    </label>
-                  ))}
-                </div>
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            {modules.map((mod) => (
+              <div key={mod} className="border p-2 rounded-lg">
+                <h3 className="font-semibold mb-2 capitalize">{mod}</h3>
+                {(["create", "read", "update", "delete"] as (keyof Permission)[]).map((type) => (
+                  <label key={type} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={data.permissions[mod][type]}
+                      onChange={() => handlePermissionChange(mod, type)}
+                    />
+                    {type}
+                  </label>
+                ))}
               </div>
             ))}
           </div>
 
-          {/* Buttons */}
           <div className="flex justify-end gap-2 mt-4">
             <button
               type="button"
-              className="px-4 py-2"
+              className="px-4 py-2 rounded-lg border"
               onClick={() => setOpen(false)}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="bg-black text-white px-4 py-2 rounded-lg"
+              className="px-4 py-2 rounded-lg bg-blue-600 text-white"
+              disabled={loading}
             >
-              Create
+              {loading ? "Creating..." : "Create"}
             </button>
           </div>
         </form>
-      </motion.div>
+      </div>
     </div>
   );
 }

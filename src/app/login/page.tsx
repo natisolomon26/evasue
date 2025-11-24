@@ -16,7 +16,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // 1️⃣ Login request
+      // Login request
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -31,19 +31,15 @@ export default function LoginPage() {
         return;
       }
 
-      // 2️⃣ Fetch current user info (from backend using HTTP-only cookie)
+      // Fetch current user info
       const userRes = await fetch("/api/auth/me");
       const userJson = await userRes.json();
 
-      if (!userRes.ok) {
-        setError(userJson.error || "Failed to get user info");
-        setLoading(false);
-        return;
-      }
+      const role = userJson.user?.role;
 
-      // 3️⃣ Redirect based on admin flag
-      if (userJson.isAdmin) {
-        router.push("/admin/events");
+      // Redirect based on role
+      if (role === "superadmin" || role === "admin") {
+        router.push("/admin");
       } else {
         router.push("/");
       }
@@ -102,13 +98,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div
-        className="hidden md:block w-1/2 bg-cover bg-center"
-        style={{
-          backgroundImage:
-            'url("https://images.unsplash.com/photo-1503676260728-1c00da094a0b")',
-        }}
-      />
+      
     </div>
   );
 }

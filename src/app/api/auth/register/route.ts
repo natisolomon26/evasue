@@ -11,35 +11,44 @@ export async function POST(req: Request) {
 
     const { name, email, password, isAdmin } = await req.json();
 
+    if (!name || !email || !password) {
+      return NextResponse.json({ error: "Name, email, and password are required" }, { status: 400 });
+    }
+
     // Check if user exists
     const exists = await User.findOne({ email });
     if (exists) {
-      return NextResponse.json(
-        { error: "User already exists" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "User already exists" }, { status: 400 });
     }
 
     // Hash password
     const hashed = await bcrypt.hash(password, 10);
 
-    // Check if first user → make system-protected Super Admin
+    // Determine if first user → system-protected superadmin
     const userCount = await User.countDocuments({});
     const isSystemProtected = userCount === 0;
+
+    // Determine role
+    let role: "superadmin" | "admin" | "staff" = "staff";
+    if (isSystemProtected) role = "superadmin";
+    else if (isAdmin) role = "admin";
+
+    // Set default permissions
+    const defaultPermissions = {
+      events: { create: role === "superadmin", read: true, update: role === "superadmin", delete: role === "superadmin" },
+      newsletter: { create: role === "superadmin", read: true, update: role === "superadmin", delete: role === "superadmin" },
+      emails: { create: role === "superadmin", read: true, update: role === "superadmin", delete: role === "superadmin" },
+      materials: { create: role === "superadmin", read: true, update: role === "superadmin", delete: role === "superadmin" },
+    };
 
     // Create user
     const user = await User.create({
       name,
       email,
       password: hashed,
-      isAdmin: isAdmin || isSystemProtected, // Super Admin is automatically admin
+      role,
       isSystemProtected,
-      permissions: {
-        events: { create: isSystemProtected, read: true, update: isSystemProtected, delete: isSystemProtected },
-        newsletter: { create: isSystemProtected, read: true, update: isSystemProtected, delete: isSystemProtected },
-        emails: { create: isSystemProtected, read: true, update: isSystemProtected, delete: isSystemProtected },
-        materials: { create: isSystemProtected, read: true, update: isSystemProtected, delete: isSystemProtected },
-      },
+      permissions: defaultPermissions,
     });
 
     // Sign JWT
@@ -47,7 +56,7 @@ export async function POST(req: Request) {
       id: user._id.toString(),
       email: user.email,
       name: user.name,
-      isAdmin: user.isAdmin,
+      role: user.role,
       isSystemProtected: user.isSystemProtected,
       permissions: user.permissions,
     });
@@ -58,7 +67,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
 
-    // Set cookie
+    // Set HTTP-only cookie
     setAuthCookie(res, token);
 
     return res;

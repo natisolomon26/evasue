@@ -10,8 +10,8 @@ export default function SignupPage() {
     name: "",
     email: "",
     password: "",
+    role: "staff", // default role for signup
   });
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -35,16 +35,19 @@ export default function SignupPage() {
         return;
       }
 
-      // After successful signup, check if user is admin
+      // Fetch current user info
       const userRes = await fetch("/api/auth/me");
       const userJson = await userRes.json();
 
-      if (userJson.user?.isAdmin) {
-        router.push("/admin/events");
+      const role = userJson.user?.role;
+
+      // Redirect based on role
+      if (role === "superadmin" || role === "admin") {
+        router.push("/admin");
       } else {
         router.push("/");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       setError("Server error. Please try again.");
     } finally {
@@ -54,23 +57,18 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Section Form */}
       <div className="w-full md:w-1/2 flex items-center justify-center bg-white p-10">
         <div className="max-w-sm w-full">
           <h1 className="text-3xl font-bold mb-6">Create Account</h1>
 
-          {error && (
-            <p className="text-red-600 mb-4 text-sm">{error}</p>
-          )}
+          {error && <p className="text-red-600 mb-4 text-sm">{error}</p>}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="text"
               placeholder="Full Name"
               value={data.name}
-              onChange={(e) =>
-                setData({ ...data, name: e.target.value })
-              }
+              onChange={(e) => setData({ ...data, name: e.target.value })}
               className="w-full p-3 border rounded-lg"
               required
             />
@@ -79,9 +77,7 @@ export default function SignupPage() {
               type="email"
               placeholder="Email"
               value={data.email}
-              onChange={(e) =>
-                setData({ ...data, email: e.target.value })
-              }
+              onChange={(e) => setData({ ...data, email: e.target.value })}
               className="w-full p-3 border rounded-lg"
               required
             />
@@ -90,9 +86,7 @@ export default function SignupPage() {
               type="password"
               placeholder="Password"
               value={data.password}
-              onChange={(e) =>
-                setData({ ...data, password: e.target.value })
-              }
+              onChange={(e) => setData({ ...data, password: e.target.value })}
               className="w-full p-3 border rounded-lg"
               required
             />
@@ -115,14 +109,7 @@ export default function SignupPage() {
         </div>
       </div>
 
-      {/* Right Side Image */}
-      <div
-        className="hidden md:block w-1/2 bg-cover bg-center"
-        style={{
-          backgroundImage:
-            'url("https://images.unsplash.com/photo-1528070479332-ecc102018475")',
-        }}
-      />
+      
     </div>
   );
 }
