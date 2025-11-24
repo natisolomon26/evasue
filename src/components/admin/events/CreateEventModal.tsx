@@ -10,13 +10,13 @@ interface CreateEventModalProps {
 }
 
 export default function CreateEventModal({ open, setOpen, refreshEvents }: CreateEventModalProps) {
-  const [form, setForm] = useState({ name: "", date: "", status: "Open" });
+  const [form, setForm] = useState({ title: "", description: "", date: "", status: "Open" });
   const [loading, setLoading] = useState(false);
 
   if (!open) return null;
 
   const handleSave = async () => {
-    if (!form.name || !form.date) return alert("Please fill all fields");
+    if (!form.title || !form.date) return alert("Please fill all required fields");
 
     setLoading(true);
     try {
@@ -24,17 +24,19 @@ export default function CreateEventModal({ open, setOpen, refreshEvents }: Creat
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: form.name,
-          description: form.name,
-          eventDate: form.date,
+          title: form.title,
+          description: form.description,
+          date: new Date(form.date), // send proper Date
         }),
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create event");
 
-      setForm({ name: "", date: "", status: "Open" });
+      setForm({ title: "", description: "", date: "", status: "Open" });
       setOpen(false);
       refreshEvents();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       alert(err.message);
     }
@@ -42,7 +44,7 @@ export default function CreateEventModal({ open, setOpen, refreshEvents }: Creat
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -53,9 +55,15 @@ export default function CreateEventModal({ open, setOpen, refreshEvents }: Creat
         <div className="space-y-3">
           <input
             className="border w-full p-2 rounded-lg"
-            placeholder="Event Name"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="Event Title"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+          />
+          <textarea
+            className="border w-full p-2 rounded-lg"
+            placeholder="Description"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
           <input
             type="date"
@@ -74,7 +82,7 @@ export default function CreateEventModal({ open, setOpen, refreshEvents }: Creat
         </div>
 
         <div className="flex justify-end mt-4 gap-2">
-          <button className="px-4 py-2" onClick={() => setOpen(false)}>
+          <button className="px-4 py-2" onClick={() => setOpen(false)} disabled={loading}>
             Cancel
           </button>
           <button

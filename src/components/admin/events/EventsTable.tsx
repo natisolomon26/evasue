@@ -1,20 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { EventType } from "@/types/events";
 import EditEventModal from "./EditEventModal";
 import DeleteEventModal from "./DeleteEventModal";
+import CreateEventModal from "./CreateEventModal";
 
-interface EventsTableProps {
-  events: EventType[];
-  loading: boolean;
-  refreshEvents: () => void;
-  onCreateClick: () => void;
-}
-
-export default function EventsTable({ events, loading, refreshEvents, onCreateClick }: EventsTableProps) {
+export default function EventsTable() {
+  const [events, setEvents] = useState<EventType[]>([]);
+  const [loading, setLoading] = useState(true);
   const [editData, setEditData] = useState<EventType | null>(null);
   const [deleteData, setDeleteData] = useState<EventType | null>(null);
+  const [openCreate, setOpenCreate] = useState(false);
+
+  const fetchEvents = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/events");
+      const data = await res.json();
+      setEvents(data.events || []);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to fetch events");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString() + " " + d.toLocaleTimeString();
+  };
+
+  const getStatus = (dateStr: string) => {
+    return new Date(dateStr) > new Date() ? "Active" : "Past";
+  };
 
   return (
     <div className="border rounded-xl p-4">
@@ -23,7 +47,7 @@ export default function EventsTable({ events, loading, refreshEvents, onCreateCl
 
         <button
           className="bg-black text-white px-4 py-2 rounded-xl"
-          onClick={onCreateClick}
+          onClick={() => setOpenCreate(true)}
         >
           + Create Event
         </button>
@@ -44,10 +68,10 @@ export default function EventsTable({ events, loading, refreshEvents, onCreateCl
 
           <tbody>
             {events.map((item) => (
-              <tr key={item.id} className="border-b">
-                <td className="py-3">{item.name}</td>
-                <td>{item.date}</td>
-                <td>{item.status}</td>
+              <tr key={item._id} className="border-b">
+                <td className="py-3">{item.title}</td>
+                <td>{formatDate(item.date)}</td>
+                <td>{getStatus(item.date)}</td>
 
                 <td className="text-right space-x-2">
                   <button
@@ -66,12 +90,34 @@ export default function EventsTable({ events, loading, refreshEvents, onCreateCl
                 </td>
               </tr>
             ))}
+
+            {events.length === 0 && (
+              <tr>
+                <td colSpan={4} className="text-center py-4">
+                  No events found.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       )}
 
-      <EditEventModal data={editData} setData={setEditData} refreshEvents={refreshEvents} />
-      <DeleteEventModal data={deleteData} setData={setDeleteData} refreshEvents={refreshEvents} />
+      {/* Modals */}
+      <CreateEventModal
+        open={openCreate}
+        setOpen={setOpenCreate}
+        refreshEvents={fetchEvents}
+      />
+      <EditEventModal
+        data={editData}
+        setData={setEditData}
+        refreshEvents={fetchEvents}
+      />
+      <DeleteEventModal
+        data={deleteData}
+        setData={setDeleteData}
+        refreshEvents={fetchEvents}
+      />
     </div>
   );
 }

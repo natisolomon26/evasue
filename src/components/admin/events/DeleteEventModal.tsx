@@ -20,13 +20,14 @@ export default function DeleteEventModal({ data, setData, refreshEvents }: Delet
 
       setData(null);
       refreshEvents();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       alert(err.message);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -34,11 +35,13 @@ export default function DeleteEventModal({ data, setData, refreshEvents }: Delet
       >
         <h2 className="text-xl font-bold mb-3">Delete Event</h2>
         <p className="text-gray-600">
-          Are you sure you want to delete <b>{data.name}</b>?
+          Are you sure you want to delete <b>{data.title}</b>?
         </p>
 
         <div className="flex justify-end mt-5 gap-3">
-          <button className="px-4 py-2" onClick={() => setData(null)}>Cancel</button>
+          <button className="px-4 py-2" onClick={() => setData(null)} disabled={false}>
+            Cancel
+          </button>
           <button
             className="bg-red-600 text-white px-4 py-2 rounded-lg"
             onClick={handleDelete}

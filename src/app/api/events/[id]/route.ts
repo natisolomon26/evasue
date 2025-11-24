@@ -1,11 +1,22 @@
+// src/app/api/events/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import Event from "@/models/Event";
+import { connectToDatabase } from "@/lib/mongoose";
 import { authMiddleware } from "@/lib/authMiddleware";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+// -----------------------
+// GET SINGLE EVENT
+// -----------------------
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const event = await Event.findById(params.id).populate("createdBy", "name email");
+    await connectToDatabase();
+
+    // Unwrap params
+    const { id } = await context.params;
+
+    const event = await Event.findById(id);
     if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
+
     return NextResponse.json({ event });
   } catch (err) {
     console.error(err);
@@ -13,14 +24,22 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+// -----------------------
+// UPDATE EVENT
+// -----------------------
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    await connectToDatabase();
+
+    // Check permission
     const user = authMiddleware(req, { requirePermission: { resource: "events", action: "update" } });
     if (user instanceof NextResponse) return user;
 
+    // Unwrap params
+    const { id } = await context.params;
     const body = await req.json();
-    const event = await Event.findByIdAndUpdate(params.id, body, { new: true });
 
+    const event = await Event.findByIdAndUpdate(id, body, { new: true });
     if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
 
     return NextResponse.json({ message: "Event updated", event });
@@ -30,12 +49,21 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+// -----------------------
+// DELETE EVENT
+// -----------------------
+export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    await connectToDatabase();
+
+    // Check permission
     const user = authMiddleware(req, { requirePermission: { resource: "events", action: "delete" } });
     if (user instanceof NextResponse) return user;
 
-    const event = await Event.findByIdAndDelete(params.id);
+    // Unwrap params
+    const { id } = await context.params;
+
+    const event = await Event.findByIdAndDelete(id);
     if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
 
     return NextResponse.json({ message: "Event deleted" });
