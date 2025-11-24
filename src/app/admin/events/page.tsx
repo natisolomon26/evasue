@@ -1,92 +1,70 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import EventsTable from "@/components/admin/events/EventsTable";
+import CreateEventModal from "@/components/admin/events/CreateEventModal";
+import EventStatsCards from "@/components/admin/events/EventsStatsCards"; // imported
+import { EventType } from "@/types/events";
 
-interface Event {
-  _id: string;
-  title: string;
-  description: string;
-  eventDate: string;
-}
+export default function EventsPage() {
+  const [events, setEvents] = useState<EventType[]>([]);
+  const [openCreate, setOpenCreate] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-export default function AdminEventsPage() {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [eventDate, setEventDate] = useState("");
-
-  // Fetch all events
-  useEffect(() => {
-    fetch("/api/events")
-      .then(res => res.json())
-      .then(data => setEvents(data.events));
-  }, []);
-
-  // Create event
-  const handleCreate = async () => {
-    const res = await fetch("/api/events", {
-      method: "POST",
-      body: JSON.stringify({ title, description, eventDate }),
-    });
-
-    if (res.ok) {
+  const fetchEvents = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/events");
       const data = await res.json();
-      setEvents(prev => [data.event, ...prev]);
-      setTitle("");
-      setDescription("");
-      setEventDate("");
-      alert("Event created!");
-    } else {
-      alert("Error creating event");
+      setEvents(data.events.map((e: any) => ({
+        id: e._id,
+        name: e.title,
+        description: e.description,
+        date: new Date(e.eventDate).toLocaleDateString(),
+        status: "Open",
+      })));
+    } catch (err) {
+      console.error(err);
     }
+    setLoading(false);
   };
 
+  useEffect(() => {
+  (async () => {
+    await fetchEvents();
+  })();
+}, []);
+
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">Manage Events</h2>
-
-      {/* Create Event Form */}
-      <div className="p-4 bg-white rounded shadow mb-6">
-        <h3 className="font-semibold mb-2">Create New Event</h3>
-        <input
-          type="text"
-          placeholder="Title"
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-          className="border p-2 w-full mb-2"
-        />
-        <textarea
-          placeholder="Description"
-          value={description}
-          onChange={e => setDescription(e.target.value)}
-          className="border p-2 w-full mb-2"
-        />
-        <input
-          type="date"
-          value={eventDate}
-          onChange={e => setEventDate(e.target.value)}
-          className="border p-2 w-full mb-2"
-        />
-        <button
-          onClick={handleCreate}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          Create Event
-        </button>
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Events</h1>
       </div>
 
-      {/* Events List */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {events.map(event => (
-          <div key={event._id} className="p-4 bg-white rounded shadow">
-            <h4 className="font-semibold">{event.title}</h4>
-            <p>{event.description}</p>
-            <p className="text-sm text-gray-500">
-              {new Date(event.eventDate).toLocaleDateString()}
-            </p>
-          </div>
-        ))}
-      </div>
+      {/* Stats Cards */}
+      <EventStatsCards events={events} />
+
+      {/* Events Table */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25 }}
+      >
+        <EventsTable
+          events={events}
+          refreshEvents={fetchEvents}
+          onCreateClick={() => setOpenCreate(true)}
+          loading={loading}
+        />
+      </motion.div>
+
+      {/* Create Event Modal */}
+      <CreateEventModal
+        open={openCreate}
+        setOpen={setOpenCreate}
+        refreshEvents={fetchEvents}
+      />
     </div>
   );
 }

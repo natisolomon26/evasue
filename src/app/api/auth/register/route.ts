@@ -1,3 +1,4 @@
+// src/app/api/auth/register/route.ts
 import { connectToDatabase } from "@/lib/mongoose";
 import { signJwt, setAuthCookie } from "@/lib/jwt";
 import User from "@/models/User";
@@ -22,24 +23,38 @@ export async function POST(req: Request) {
     // Hash password
     const hashed = await bcrypt.hash(password, 10);
 
+    // Check if first user → make system-protected Super Admin
+    const userCount = await User.countDocuments({});
+    const isSystemProtected = userCount === 0;
+
     // Create user
     const user = await User.create({
       name,
       email,
       password: hashed,
-      isAdmin: isAdmin || false, // defaults to false
+      isAdmin: isAdmin || isSystemProtected, // Super Admin is automatically admin
+      isSystemProtected,
+      permissions: {
+        events: { create: isSystemProtected, read: true, update: isSystemProtected, delete: isSystemProtected },
+        newsletter: { create: isSystemProtected, read: true, update: isSystemProtected, delete: isSystemProtected },
+        emails: { create: isSystemProtected, read: true, update: isSystemProtected, delete: isSystemProtected },
+        materials: { create: isSystemProtected, read: true, update: isSystemProtected, delete: isSystemProtected },
+      },
     });
 
-    // Sign JWT (NO role)
+    // Sign JWT
     const token = signJwt({
       id: user._id.toString(),
       email: user.email,
+      name: user.name,
       isAdmin: user.isAdmin,
+      isSystemProtected: user.isSystemProtected,
+      permissions: user.permissions,
     });
 
-    // Create response
+    // Response
     const res = NextResponse.json(
-      { message: "User registered successfully" },
+      { message: "User registered successfully", user },
       { status: 201 }
     );
 

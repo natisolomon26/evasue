@@ -20,22 +20,36 @@ export default function SignupPage() {
     setLoading(true);
     setError("");
 
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-    const json = await res.json();
+      const json = await res.json();
 
-    if (!res.ok) {
-      setError(json.error || "Something went wrong");
+      if (!res.ok) {
+        setError(json.error || "Something went wrong");
+        setLoading(false);
+        return;
+      }
+
+      // After successful signup, check if user is admin
+      const userRes = await fetch("/api/auth/me");
+      const userJson = await userRes.json();
+
+      if (userJson.user?.isAdmin) {
+        router.push("/admin/events");
+      } else {
+        router.push("/");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Server error. Please try again.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // Cookie is already set by backend
-    router.push("/page/profile");
   }
 
   return (

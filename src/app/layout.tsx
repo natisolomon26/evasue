@@ -1,8 +1,9 @@
+// app/layout.tsx
 import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import Header from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
+// Import the new wrapper component
+import LayoutWrapper from '@/components/layout/LayoutWrapper'; 
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -28,13 +29,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div className="min-h-screen flex flex-col">
-          <Header />
-          <main className="flex-grow">
-            {children}
-          </main>
-          <Footer />
-        </div>
+        {/* Pass children to the new LayoutWrapper */}
+        <LayoutWrapper>
+          {children}
+        </LayoutWrapper>
       </body>
     </html>
   );

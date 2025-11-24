@@ -6,11 +6,7 @@ import { useRouter } from "next/navigation";
 export default function LoginPage() {
   const router = useRouter();
 
-  const [data, setData] = useState({
-    email: "",
-    password: "",
-  });
-
+  const [data, setData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -19,26 +15,48 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+    try {
+      // 1️⃣ Login request
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-    const json = await res.json();
+      const json = await res.json();
 
-    if (!res.ok) {
-      setError(json.error || "Invalid credentials");
+      if (!res.ok) {
+        setError(json.error || "Invalid credentials");
+        setLoading(false);
+        return;
+      }
+
+      // 2️⃣ Fetch current user info (from backend using HTTP-only cookie)
+      const userRes = await fetch("/api/auth/me");
+      const userJson = await userRes.json();
+
+      if (!userRes.ok) {
+        setError(userJson.error || "Failed to get user info");
+        setLoading(false);
+        return;
+      }
+
+      // 3️⃣ Redirect based on admin flag
+      if (userJson.isAdmin) {
+        router.push("/admin/events");
+      } else {
+        router.push("/");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Login failed");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    router.push("/page/profile");
   }
 
   return (
     <div className="min-h-screen flex">
-      {/* Left - Form */}
       <div className="w-full md:w-1/2 flex items-center justify-center bg-white p-10">
         <div className="max-w-sm w-full">
           <h1 className="text-3xl font-bold mb-6">Welcome Back</h1>
@@ -51,9 +69,7 @@ export default function LoginPage() {
               placeholder="Email"
               className="w-full p-3 border rounded-lg"
               value={data.email}
-              onChange={(e) =>
-                setData({ ...data, email: e.target.value })
-              }
+              onChange={(e) => setData({ ...data, email: e.target.value })}
               required
             />
 
@@ -62,9 +78,7 @@ export default function LoginPage() {
               placeholder="Password"
               className="w-full p-3 border rounded-lg"
               value={data.password}
-              onChange={(e) =>
-                setData({ ...data, password: e.target.value })
-              }
+              onChange={(e) => setData({ ...data, password: e.target.value })}
               required
             />
 
@@ -88,7 +102,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right - Image */}
       <div
         className="hidden md:block w-1/2 bg-cover bg-center"
         style={{

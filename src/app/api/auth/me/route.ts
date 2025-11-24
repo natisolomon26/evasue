@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 export async function GET() {
   await connectToDatabase();
 
-  const cookieStore = cookies(); // ✅ synchronous
+  const cookieStore = cookies(); // synchronous
   const token = (await cookieStore).get("auth_token")?.value;
 
   if (!token) return NextResponse.json({ user: null });
@@ -18,5 +18,22 @@ export async function GET() {
 
   const user = await User.findById(decoded.id).select("-password");
 
-  return NextResponse.json({ user });
+  if (!user) return NextResponse.json({ user: null });
+
+  // ✅ If system-protected, override all permissions to true
+  const permissions = user.isSystemProtected
+    ? {
+        events: { create: true, read: true, update: true, delete: true },
+        newsletter: { create: true, read: true, update: true, delete: true },
+        emails: { create: true, read: true, update: true, delete: true },
+        materials: { create: true, read: true, update: true, delete: true },
+      }
+    : user.permissions;
+
+  const userWithPermissions = {
+    ...user.toObject(),
+    permissions,
+  };
+
+  return NextResponse.json({ user: userWithPermissions });
 }

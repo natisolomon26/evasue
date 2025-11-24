@@ -1,34 +1,40 @@
+// src/app/api/events/route.ts
 import { connectToDatabase } from "@/lib/mongoose";
-import Event from "@/models/Event";
-import { cookies } from "next/headers";
-import { verifyJwt } from "@/lib/jwt";
+import Event from "@/models/Event"; // create Event model
+import { authMiddleware } from "@/lib/authMiddleware";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
-  await connectToDatabase();
-  const events = await Event.find().sort({ createdAt: -1 });
-  return Response.json({ events });
-}
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   await connectToDatabase();
 
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  if (!token) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  // ✅ Check user and permissions
+  const userOrResponse = authMiddleware(req, true); // admin required
+  if (userOrResponse instanceof NextResponse) return userOrResponse;
+  const user = userOrResponse;
 
-  const user = verifyJwt(token);
-  if (!user || user.role !== "admin") {
-    return Response.json({ error: "Only admin can create events" }, { status: 403 });
+  // Check if user has permission to create events
+  if (!user.permissions?.events?.create) {
+    return NextResponse.json({ error: "Forbidden: No permission to create events" }, { status: 403 });
   }
 
-  const { title, description, eventDate } = await req.json();
+  try {
+    const body = await req.json();
+    const { title, description, eventDate } = body;
 
-  const event = await Event.create({
-    title,
-    description,
-    eventDate,
-    createdBy: user.id,
-  });
+    if (!title || !eventDate) {
+      return NextResponse.json({ error: "Title and date are required" }, { status: 400 });
+    }
 
-  return Response.json({ message: "Event created", event }, { status: 201 });
+    const event = await Event.create({
+      title,
+      description: description || "",
+      eventDate: new Date(eventDate),
+      createdBy: user.id,
+    });
+
+    return NextResponse.json({ message: "Event created successfully", event }, { status: 201 });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
 }

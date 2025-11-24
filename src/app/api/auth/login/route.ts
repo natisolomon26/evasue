@@ -1,3 +1,4 @@
+// src/app/api/auth/login/route.ts
 import { connectToDatabase } from "@/lib/mongoose";
 import { signJwt } from "@/lib/jwt";
 import User from "@/models/User";
@@ -10,7 +11,6 @@ export async function POST(req: Request) {
 
     const { email, password } = await req.json();
 
-    // Basic validation
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email and password are required" },
@@ -18,7 +18,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Find user
     const user = await User.findOne({ email });
     if (!user) {
       return NextResponse.json(
@@ -27,7 +26,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Validate password
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
       return NextResponse.json(
@@ -36,24 +34,33 @@ export async function POST(req: Request) {
       );
     }
 
-    // ----------------------------
-    // Create JWT payload
-    // ----------------------------
+    // If system-protected, override permissions to true
+    const permissions = user.isSystemProtected
+      ? {
+          events: { create: true, read: true, update: true, delete: true },
+          newsletter: { create: true, read: true, update: true, delete: true },
+          emails: { create: true, read: true, update: true, delete: true },
+          materials: { create: true, read: true, update: true, delete: true },
+        }
+      : user.permissions;
+
     const token = signJwt({
       id: user._id.toString(),
       email: user.email,
-      permissions: [],           // placeholder for future permission system
+      name: user.name,
+      isAdmin: user.isAdmin,
+      isSystemProtected: user.isSystemProtected,
+      permissions,
     });
 
-    // Response
     const res = NextResponse.json({
       message: "Login successful",
-      user: { id: user._id, email: user.email },
+      user: {
+        ...user.toObject(),
+        permissions,
+      },
     });
 
-    // ----------------------------
-    // Set secure HTTP-only cookie
-    // ----------------------------
     res.cookies.set({
       name: "auth_token",
       value: token,
@@ -65,11 +72,8 @@ export async function POST(req: Request) {
     });
 
     return res;
-  } catch (error) {
-    console.error("Login error:", error);
-    return NextResponse.json(
-      { error: "Server error, please try again" },
-      { status: 500 }
-    );
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
