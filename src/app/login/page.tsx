@@ -43,6 +43,7 @@ export default function LoginPage() {
       } else {
         router.push("/");
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Login failed");

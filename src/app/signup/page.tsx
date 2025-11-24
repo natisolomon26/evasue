@@ -47,6 +47,7 @@ export default function SignupPage() {
       } else {
         router.push("/");
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error(err);
       setError("Server error. Please try again.");
