@@ -1,12 +1,27 @@
 // src/models/Event.ts
 import mongoose, { Schema, Document, Model } from "mongoose";
 
+export interface IFormField {
+  label: string;
+  type: "text" | "textarea" | "email" | "number" | "select" | "checkbox";
+  options?: string[]; // only for select/checkbox
+  required?: boolean;
+}
+
+export interface IRegistration {
+  userId: string;
+  answers: Record<string, string>; // key: field label, value: response
+  registeredAt: Date;
+}
+
 export interface IEvent extends Document {
   title: string;
   description: string;
   date: Date;
   location: string;
-  createdBy: string; // user id
+  createdBy: string;
+  formFields: IFormField[];
+  registrations: IRegistration[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -18,6 +33,21 @@ const EventSchema = new Schema<IEvent>(
     date: { type: Date, required: true },
     location: { type: String, default: "" },
     createdBy: { type: String, required: true },
+    formFields: [
+      {
+        label: { type: String, required: true },
+        type: { type: String, enum: ["text","textarea","email","number","select","checkbox"], required: true },
+        options: [String],
+        required: { type: Boolean, default: false },
+      }
+    ],
+    registrations: [
+      {
+        userId: { type: String },
+        answers: { type: Map, of: String },
+        registeredAt: { type: Date, default: Date.now },
+      }
+    ]
   },
   { timestamps: true }
 );

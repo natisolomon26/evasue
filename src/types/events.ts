@@ -1,4 +1,5 @@
 export interface EventType {
+  registrations: any
   description: string
   _id: Key | null | undefined
   title: ReactNode

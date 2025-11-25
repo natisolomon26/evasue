@@ -1,99 +1,165 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { useState } from "react";
 
-interface CreateEventModalProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  refreshEvents: () => void;
-}
-
-export default function CreateEventModal({ open, setOpen, refreshEvents }: CreateEventModalProps) {
-  const [form, setForm] = useState({ title: "", description: "", date: "", status: "Open" });
-  const [loading, setLoading] = useState(false);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default function CreateEventModal({ open, setOpen, refreshEvents }: any) {
+  const [title, setTitle] = useState("");
+  const [date, setDate] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [formFields, setFormFields] = useState<any[]>([]);
 
   if (!open) return null;
 
-  const handleSave = async () => {
-    if (!form.title || !form.date) return alert("Please fill all required fields");
+  const addField = () => {
+    setFormFields([
+      ...formFields,
+      { label: "", type: "text", required: false }
+    ]);
+  };
 
-    setLoading(true);
-    try {
-      const res = await fetch("/api/events", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: form.title,
-          description: form.description,
-          date: new Date(form.date), // send proper Date
-        }),
-      });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updateField = (i: number, key: string, val: any) => {
+    const copy = [...formFields];
+    copy[i][key] = val;
+    setFormFields(copy);
+  };
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create event");
+  const createEvent = async () => {
+    const res = await fetch("/api/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, date, formFields }),
+    });
 
-      setForm({ title: "", description: "", date: "", status: "Open" });
-      setOpen(false);
-      refreshEvents();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      alert(err.message);
-    }
-    setLoading(false);
+    if (!res.ok) return alert("Failed to create event");
+
+    refreshEvents();
+    setOpen(false);
+    setTitle("");
+    setDate("");
+    setFormFields([]);
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="bg-white p-6 rounded-xl w-[400px]"
-      >
-        <h2 className="text-xl font-bold mb-4">Create Event</h2>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100]">
+      {/* MAIN MODAL BOX */}
+      <div className="bg-white w-full max-w-4xl rounded-xl shadow-xl flex flex-col h-[80vh]">
 
-        <div className="space-y-3">
-          <input
-            className="border w-full p-2 rounded-lg"
-            placeholder="Event Title"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-          />
-          <textarea
-            className="border w-full p-2 rounded-lg"
-            placeholder="Description"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-          />
-          <input
-            type="date"
-            className="border w-full p-2 rounded-lg"
-            value={form.date}
-            onChange={(e) => setForm({ ...form, date: e.target.value })}
-          />
-          <select
-            className="border w-full p-2 rounded-lg"
-            value={form.status}
-            onChange={(e) => setForm({ ...form, status: e.target.value })}
+        {/* HEADER */}
+        <div className="p-6 border-b flex justify-between items-center">
+          <h2 className="text-2xl font-bold">Create New Event</h2>
+          <button
+            className="text-gray-600 hover:text-black text-xl"
+            onClick={() => setOpen(false)}
           >
-            <option>Open</option>
-            <option>Closed</option>
-          </select>
+            ✕
+          </button>
         </div>
 
-        <div className="flex justify-end mt-4 gap-2">
-          <button className="px-4 py-2" onClick={() => setOpen(false)} disabled={loading}>
+        {/* BODY (scrollable) */}
+        <div className="p-6 overflow-y-auto flex-1">
+          <div className="grid grid-cols-2 gap-6">
+
+            {/* LEFT COLUMN */}
+            <div>
+              <label className="font-semibold">Event Title</label>
+              <input
+                type="text"
+                className="border p-3 w-full rounded-lg mt-1"
+                placeholder="Example: Charity Run"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+
+              <div className="mt-6">
+                <label className="font-semibold">Event Date</label>
+                <input
+                  type="datetime-local"
+                  className="border p-3 w-full rounded-lg mt-1"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN - FORM BUILDER */}
+            <div>
+              <div className="flex justify-between items-center">
+                <label className="font-semibold">Registration Form Fields</label>
+                <button
+                  onClick={addField}
+                  className="bg-black text-white px-4 py-2 rounded-lg"
+                >
+                  + Add Field
+                </button>
+              </div>
+
+              <div className="space-y-4 mt-4">
+                {formFields.map((field, i) => (
+                  <div
+                    key={i}
+                    className="border rounded-lg p-4 bg-gray-50 shadow-sm"
+                  >
+                    <input
+                      type="text"
+                      placeholder="Field Label (Full Name, Email, etc)"
+                      className="border p-2 rounded w-full"
+                      value={field.label}
+                      onChange={(e) => updateField(i, "label", e.target.value)}
+                    />
+
+                    <select
+                      className="border p-2 rounded w-full mt-2"
+                      value={field.type}
+                      onChange={(e) => updateField(i, "type", e.target.value)}
+                    >
+                      <option value="text">Text</option>
+                      <option value="number">Number</option>
+                      <option value="textarea">Textarea</option>
+                      <option value="select">Dropdown</option>
+                    </select>
+
+                    <label className="flex items-center gap-2 mt-2">
+                      <input
+                        type="checkbox"
+                        checked={field.required}
+                        onChange={(e) =>
+                          updateField(i, "required", e.target.checked)
+                        }
+                      />
+                      Required
+                    </label>
+
+                    {/* REMOVE FIELD */}
+                    <button
+                      className="text-red-600 text-sm mt-2"
+                      onClick={() =>
+                        setFormFields(formFields.filter((_, idx) => idx !== i))
+                      }
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* FOOTER - sticky */}
+        <div className="p-4 border-t flex justify-end gap-4 bg-white">
+          <button className="px-4 py-2" onClick={() => setOpen(false)}>
             Cancel
           </button>
           <button
-            className="bg-black text-white px-4 py-2 rounded-lg"
-            onClick={handleSave}
-            disabled={loading}
+            className="bg-green-600 text-white px-6 py-2 rounded-lg"
+            onClick={createEvent}
           >
-            {loading ? "Saving..." : "Save Event"}
+            Create Event
           </button>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
