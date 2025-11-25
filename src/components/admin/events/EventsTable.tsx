@@ -6,9 +6,18 @@ import CreateEventModal from "./CreateEventModal";
 import EditEventModal from "./EditEventModal";
 import DeleteEventModal from "./DeleteEventModal";
 
+interface Registration {
+  userId: string;
+  answers: Record<string, string>;
+  registeredAt: string;
+  _id: string;
+}
+
 export default function EventsTable() {
   const [events, setEvents] = useState<EventType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "past">("all");
 
   const [editData, setEditData] = useState<EventType | null>(null);
   const [deleteData, setDeleteData] = useState<EventType | null>(null);
@@ -16,8 +25,7 @@ export default function EventsTable() {
 
   const [view, setView] = useState<"events" | "registrations">("events");
   const [selectedEvent, setSelectedEvent] = useState<EventType | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [registrations, setRegistrations] = useState<any[]>([]);
+  const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loadingRegs, setLoadingRegs] = useState(false);
 
   // Fetch all events
@@ -54,13 +62,41 @@ export default function EventsTable() {
     fetchEvents();
   }, []);
 
+  // Filter events based on search and status
+  const filteredEvents = events.filter(event => {
+    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         event.description.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const isActive = new Date(event.date) > new Date();
+    const matchesStatus = 
+      statusFilter === "all" ||
+      (statusFilter === "active" && isActive) ||
+      (statusFilter === "past" && !isActive);
+    
+    return matchesSearch && matchesStatus;
+  });
+
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
-    return d.toLocaleDateString() + " " + d.toLocaleTimeString();
+    return {
+      date: d.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      }),
+      time: d.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })
+    };
   };
 
   const getStatus = (dateStr: string) => {
-    return new Date(dateStr) > new Date() ? "Active" : "Past";
+    const isActive = new Date(dateStr) > new Date();
+    return {
+      text: isActive ? "Active" : "Past",
+      color: isActive ? "text-green-600 bg-green-100" : "text-gray-600 bg-gray-100"
+    };
   };
 
   const handleSelectEvent = (event: EventType) => {
@@ -69,145 +105,341 @@ export default function EventsTable() {
     fetchRegistrations(event._id);
   };
 
-  return (
-    <div className="border rounded-xl p-4">
-      {/* Toggle + Actions */}
-      <div className="flex justify-between mb-4">
-        <div className="flex gap-2">
-          <button
-            className={`px-4 py-2 rounded-xl ${
-              view === "events" ? "bg-black text-white" : "bg-gray-200"
-            }`}
-            onClick={() => setView("events")}
-          >
-            Events
-          </button>
-          <button
-            className={`px-4 py-2 rounded-xl ${
-              view === "registrations" ? "bg-black text-white" : "bg-gray-200"
-            }`}
-            onClick={() => {
-              if (!selectedEvent) return alert("Select an event first");
-              setView("registrations");
-              fetchRegistrations(selectedEvent._id);
-            }}
-          >
-            Registrations
-          </button>
-        </div>
+  const exportRegistrations = () => {
+    if (!selectedEvent || registrations.length === 0) return;
+    
+    const csvContent = [
+      ["User ID", "Registered At", ...Object.keys(registrations[0]?.answers || {})],
+      ...registrations.map(reg => [
+        reg.userId,
+        new Date(reg.registeredAt).toLocaleString(),
+        ...Object.values(reg.answers)
+      ])
+    ].map(row => row.join(",")).join("\n");
 
-        {view === "events" && (
-          <button
-            className="bg-black text-white px-4 py-2 rounded-xl"
-            onClick={() => setOpenCreate(true)}
-          >
-            + Create Event
-          </button>
-        )}
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${selectedEvent.title}-registrations.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-8 text-white">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+          <div className="mb-4 lg:mb-0">
+            <h1 className="text-2xl font-bold mb-2">Event Management</h1>
+            <p className="text-blue-100">Manage your events and track registrations</p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                view === "events" ? "bg-white text-blue-600" : "bg-blue-500 text-white hover:bg-blue-400"
+              }`}
+              onClick={() => setView("events")}
+            >
+              📅 Events
+            </button>
+            <button
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                view === "registrations" ? "bg-white text-blue-600" : "bg-blue-500 text-white hover:bg-blue-400"
+              }`}
+              onClick={() => {
+                if (!selectedEvent && view !== "registrations") {
+                  return alert("Select an event first");
+                }
+                if (selectedEvent) {
+                  fetchRegistrations(selectedEvent._id);
+                }
+                setView("registrations");
+              }}
+              disabled={!selectedEvent && view !== "registrations"}
+            >
+              👥 Registrations
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* TABLE */}
-      {view === "events" ? (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b">
-                <th className="py-2">Event Name</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Registrations</th>
-                <th className="text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="text-center py-4">
-                    Loading events...
-                  </td>
-                </tr>
-              ) : events.length > 0 ? (
-                events.map((item) => (
-                  <tr key={item._id} className="border-b">
-                    <td className="py-3">{item.title}</td>
-                    <td>{formatDate(item.date)}</td>
-                    <td>{getStatus(item.date)}</td>
-                    <td>
-                      <button
-                        className="text-blue-600 underline"
-                        onClick={() => handleSelectEvent(item)}
-                      >
-                        {item.registrations?.length || 0} Registrations
-                      </button>
-                    </td>
-                    <td className="text-right space-x-2">
-                      <button
-                        className="text-blue-600"
-                        onClick={() => setEditData(item)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="text-red-600"
-                        onClick={() => setDeleteData(item)}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5} className="text-center py-4">
-                    No events found.
-                  </td>
-                </tr>
+      {/* Content */}
+      <div className="p-6">
+        {view === "events" ? (
+          <>
+            {/* Filters and Actions */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+              <div className="flex flex-col sm:flex-row gap-4 flex-1">
+                <div className="relative flex-1 max-w-md">
+                  <input
+                    type="text"
+                    placeholder="Search events..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                    🔍
+                  </div>
+                </div>
+                
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "past")}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">All Events</option>
+                  <option value="active">Active</option>
+                  <option value="past">Past</option>
+                </select>
+              </div>
+
+              <button
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
+                onClick={() => setOpenCreate(true)}
+              >
+                <span>+</span>
+                Create Event
+              </button>
+            </div>
+
+            {/* Events Table */}
+            <div className="bg-gray-50 rounded-xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-200">
+                    <tr>
+                      <th className="px-6 py-4 text-left font-semibold text-gray-700">Event</th>
+                      <th className="px-6 py-4 text-left font-semibold text-gray-700">Date & Time</th>
+                      <th className="px-6 py-4 text-left font-semibold text-gray-700">Status</th>
+                      <th className="px-6 py-4 text-left font-semibold text-gray-700">Registrations</th>
+                      <th className="px-6 py-4 text-left font-semibold text-gray-700">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {loading ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-8 text-center">
+                          <div className="flex justify-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : filteredEvents.length > 0 ? (
+                      filteredEvents.map((event) => {
+                        const { date, time } = formatDate(event.date);
+                        const status = getStatus(event.date);
+                        
+                        return (
+                          <tr key={event._id} className="hover:bg-gray-100 transition-colors">
+                            <td className="px-6 py-4">
+                              <div>
+                                <div className="font-semibold text-gray-900">{event.title}</div>
+                                {event.description && (
+                                  <div className="text-sm text-gray-600 mt-1 line-clamp-2">
+                                    {event.description}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="text-sm font-medium text-gray-900">{date}</div>
+                              <div className="text-sm text-gray-500">{time}</div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${status.color}`}>
+                                {status.text}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <button
+                                onClick={() => handleSelectEvent(event)}
+                                className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                              >
+                                <span>👥</span>
+                                {event.registrations?.length || 0} Registered
+                              </button>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex gap-3">
+                                <button
+                                  onClick={() => setEditData(event)}
+                                  className="text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+                                >
+                                  <span>✏️</span>
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => setDeleteData(event)}
+                                  className="text-red-600 hover:text-red-800 transition-colors flex items-center gap-1"
+                                >
+                                  <span>🗑️</span>
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-8 text-center">
+                          <div className="text-gray-500">
+                            <div className="text-4xl mb-2">📅</div>
+                            <div className="font-medium">No events found</div>
+                            <div className="text-sm mt-1">
+                              {searchTerm || statusFilter !== "all" 
+                                ? "Try adjusting your search or filters" 
+                                : "Create your first event to get started"
+                              }
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Summary Stats */}
+            {!loading && events.length > 0 && (
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="text-2xl font-bold text-blue-600">{events.length}</div>
+                  <div className="text-sm text-blue-800">Total Events</div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <div className="text-2xl font-bold text-green-600">
+                    {events.filter(e => new Date(e.date) > new Date()).length}
+                  </div>
+                  <div className="text-sm text-green-800">Active Events</div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {events.reduce((total, e) => total + (e.registrations?.length || 0), 0)}
+                  </div>
+                  <div className="text-sm text-purple-800">Total Registrations</div>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          /* Registrations View */
+          <div>
+            {/* Back button and header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setView("events")}
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  <span>←</span>
+                  Back to Events
+                </button>
+                <div className="h-6 w-px bg-gray-300"></div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">{selectedEvent?.title}</h2>
+                  <p className="text-gray-600">Registrations</p>
+                </div>
+              </div>
+              
+              {registrations.length > 0 && (
+                <button
+                  onClick={exportRegistrations}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                >
+                  <span>📥</span>
+                  Export CSV
+                </button>
               )}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b">
-                <th>User ID</th>
-                <th>Answers</th>
-                <th>Registered At</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loadingRegs ? (
-                <tr>
-                  <td colSpan={3} className="text-center py-4">
-                    Loading registrations...
-                  </td>
-                </tr>
-              ) : registrations.length > 0 ? (
-                registrations.map((r) => (
-                  <tr key={r.userId} className="border-b">
-                    <td>{r.userId}</td>
-                    <td>
-                      {Object.entries(r.answers).map(([k, v]) => (
-                        <div key={k}>
-                          <b>{k}</b>: {v}
-                        </div>
-                      ))}
-                    </td>
-                    <td>{new Date(r.registeredAt).toLocaleString()}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={3} className="text-center py-4">
-                    No registrations
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+            </div>
+
+            {/* Registrations Table */}
+            <div className="bg-gray-50 rounded-xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-200">
+                    <tr>
+                      <th className="px-6 py-4 text-left font-semibold text-gray-700">User ID</th>
+                      <th className="px-6 py-4 text-left font-semibold text-gray-700">Registration Details</th>
+                      <th className="px-6 py-4 text-left font-semibold text-gray-700">Registered At</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {loadingRegs ? (
+                      <tr>
+                        <td colSpan={3} className="px-6 py-8 text-center">
+                          <div className="flex justify-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : registrations.length > 0 ? (
+                      registrations.map((reg) => (
+                        <tr key={reg._id} className="hover:bg-gray-100 transition-colors">
+                          <td className="px-6 py-4 font-mono text-sm text-gray-600">
+                            {reg.userId}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="space-y-2">
+                              {Object.entries(reg.answers).map(([key, value]) => (
+                                <div key={key} className="flex">
+                                  <span className="font-medium text-gray-700 min-w-[120px]">{key}:</span>
+                                  <span className="text-gray-900 ml-2">{String(value)}</span>
+                                </div>
+                              ))}
+                              {Object.keys(reg.answers).length === 0 && (
+                                <span className="text-gray-500 italic">No answers provided</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {new Date(reg.registeredAt).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3} className="px-6 py-8 text-center">
+                          <div className="text-gray-500">
+                            <div className="text-4xl mb-2">👥</div>
+                            <div className="font-medium">No registrations yet</div>
+                            <div className="text-sm mt-1">
+                              Registrations will appear here once users sign up
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Registration Stats */}
+            {!loadingRegs && registrations.length > 0 && (
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="text-lg font-semibold text-blue-900 mb-2">
+                  Registration Summary
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Total Registrations:</span> {registrations.length}
+                  </div>
+                  <div>
+                    <span className="font-medium">Latest Registration:</span>{" "}
+                    {new Date(Math.max(...registrations.map(r => new Date(r.registeredAt).getTime())))
+                      .toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* MODALS */}
       <CreateEventModal

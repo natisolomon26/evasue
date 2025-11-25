@@ -9,7 +9,7 @@ export async function POST(req: Request) {
 
   // Authenticate user
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const user = await authMiddleware(req as any); // cast if needed
+  const user = await authMiddleware(req as any);
   if (user instanceof NextResponse) return user;
 
   try {
@@ -23,14 +23,21 @@ export async function POST(req: Request) {
       );
     }
 
-    // Create event
+    // DEBUG: Log what we're receiving
+    console.log("Creating event with formFields:", body.formFields);
+
+    // Create event WITH formFields
     const event = await Event.create({
       title: body.title,
       description: body.description || "",
       location: body.location || "",
-      date: new Date(body.date), // ensure Date object
-      createdBy: user.id, // set the authenticated user as creator
+      date: new Date(body.date),
+      createdBy: user.id,
+      formFields: body.formFields || [], // ⚠️ ADD THIS LINE ⚠️
     });
+
+    // DEBUG: Log what was saved
+    console.log("Event created with formFields:", event.formFields);
 
     return NextResponse.json({ message: "Event created", event }, { status: 201 });
   } catch (err) {
@@ -40,10 +47,13 @@ export async function POST(req: Request) {
 }
 
 // GET all events
+// GET all events
 export async function GET() {
   await connectToDatabase();
   try {
-    const events = await Event.find().sort({ date: -1 });
+    const events = await Event.find()
+      .select('title description date location createdBy formFields registrations createdAt updatedAt')
+      .sort({ date: -1 });
     return NextResponse.json({ events }, { status: 200 });
   } catch (err) {
     console.error(err);
