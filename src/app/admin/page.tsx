@@ -7,7 +7,6 @@ import {
   Mail, 
   Users, 
   Plus,
-  Download,
   Activity,
   UserPlus,
   FileDown,
@@ -15,7 +14,6 @@ import {
   BarChart3,
   Clock
 } from "lucide-react";
-import Link from "next/link";
 import { motion } from "framer-motion";
 
 import { StatCard } from "@/components/admin/dashboard/StatCard";
@@ -110,23 +108,10 @@ export default function AdminDashboard() {
       {/* Header with Actions */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard Overview</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <h1 className="text-3xl font-bold text-sky-900">Dashboard Overview</h1>
+          <p className="text-sky-700 mt-1">
             Welcome back! Heres whats happening today.
           </p>
-        </div>
-        <div className="flex gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-            <Download className="w-4 h-4" />
-            Export Report
-          </button>
-          <Link
-            href="/admin/events?create=true"
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            New Event
-          </Link>
         </div>
       </div>
 
@@ -205,7 +190,7 @@ export default function AdminDashboard() {
               href: "/admin/events"
             }}
           />
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-white/10 rounded-2xl shadow-sm border border-white/90 overflow-hidden">
             <div className="p-6 space-y-4">
               {recentEvents.map((event, index) => (
                 <motion.div
@@ -227,7 +212,7 @@ export default function AdminDashboard() {
               href: "/admin/materials"
             }}
           />
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-blue-200/30 rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 space-y-4">
               {recentMaterials.map((material, index) => (
                 <motion.div
@@ -246,8 +231,8 @@ export default function AdminDashboard() {
         {/* Right Sidebar - Quick Stats & Actions */}
         <div className="space-y-6">
           {/* Performance Metrics */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Performance Metrics</h3>
+          <div className="bg-yellow-300/50 rounded-2xl shadow-sm border border-gray-200 p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Performance Metrics</h3>
             <div className="space-y-4">
               <MetricItem
                 icon={MailOpen}
@@ -277,8 +262,8 @@ export default function AdminDashboard() {
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
+          <div className="bg-green-300/30 rounded-2xl shadow-sm border border-green-200 p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
             <div className="space-y-3">
               <QuickAction
                 icon={Plus}
@@ -308,8 +293,8 @@ export default function AdminDashboard() {
           </div>
 
           {/* System Status */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">System Status</h3>
+          <div className="bg-red-300/50 rounded-2xl shadow-sm border border-gray-200 p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">System Status</h3>
             <div className="space-y-3">
               <StatusItem label="API Server" status="operational" />
               <StatusItem label="Database" status="operational" />

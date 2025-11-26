@@ -13,11 +13,11 @@ interface SectionHeaderProps {
 export function SectionHeader({ title, action }: SectionHeaderProps) {
   return (
     <div className="flex items-center justify-between">
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{title}</h2>
+      <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
       {action && (
         <Link
           href={action.href}
-          className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm transition-colors"
+          className="text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors"
         >
           {action.label}
         </Link>

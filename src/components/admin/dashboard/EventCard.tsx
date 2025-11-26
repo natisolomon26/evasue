@@ -22,22 +22,22 @@ export function EventCard({ event }: EventCardProps) {
   };
 
   return (
-    <div className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+    <div className="flex items-center justify-between p-4 rounded-xl border border-gray/90 hover:bg-gray-50 transition-colors">
       <div className="flex-1">
         <div className="flex items-center gap-3 mb-2">
-          <h4 className="font-semibold text-gray-900 dark:text-white">{event.title}</h4>
+          <h4 className="font-semibold text-sky-900 ">{event.title}</h4>
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[event.status]}`}>
             {event.status}
           </span>
         </div>
-        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+        <div className="flex items-center gap-4 text-sm text-sky-600">
           <span>{new Date(event.date).toLocaleDateString()}</span>
           <span>•</span>
           <span>{event.registrations} registrations</span>
         </div>
       </div>
-      <button className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
-        <MoreVertical className="w-4 h-4 text-gray-500" />
+      <button className="p-2 hover:bg-sky-200  rounded-lg transition-colors">
+        <MoreVertical className="w-4 h-4 text-sky-500" />
       </button>
     </div>
   );

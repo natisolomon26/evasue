@@ -35,7 +35,7 @@ export function StatCard({
     <Link href={href}>
       <motion.div
         whileHover={{ y: -2 }}
-        className="group p-6 bg-sky-200/50 rounded-2xl shadow-sm border border-sky-200 hover:shadow-lg transition-all duration-200"
+        className="group p-6 bg-white/90 rounded-2xl shadow-sm border border-white hover:shadow-lg transition-all duration-200"
       >
         <div className="flex items-center justify-between mb-4">
           <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colorClasses[color]} flex items-center justify-center text-white`}>

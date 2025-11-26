@@ -172,7 +172,7 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
             animate={{ x: 0 }}
             exit={{ x: -320 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className={`fixed h-screen  bg-gradient-to-b from-slate-900 to-slate-800 shadow-2xl z-40 ${
+            className={`fixed h-screen  bg-gradient-to-b from-white/90 to-white/50 shadow-2xl z-40 ${
               isCollapsed ? "w-20" : "w-80"
             } transition-all duration-300 flex flex-col`}
           >
@@ -188,8 +188,8 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
                     animate={{ opacity: 1 }}
                     className="flex-1 min-w-0"
                   >
-                    <h2 className="text-xl font-bold text-white truncate">Admin Portal</h2>
-                    <p className="text-slate-400 text-sm truncate">
+                    <h2 className="text-xl font-bold text-sky-900 truncate">Admin Portal</h2>
+                    <p className="text-sky-800 text-sm truncate">
                       {user ? getRoleLabel(user.role) : "Loading..."}
                     </p>
                   </motion.div>
@@ -204,8 +204,8 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
                 animate={{ opacity: 1, y: 0 }}
                 className="px-6 py-4 border-b border-slate-700/40"
               >
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/40 backdrop-blur-sm hover:bg-slate-800/60 transition-colors">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm bg-gradient-to-br from-emerald-500 to-teal-600">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-white/40 backdrop-blur-sm hover:bg-white/90 transition-colors">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm bg-gradient-to-br from-sky-500 to-sky-600">
                     {user.avatar ? (
                       <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover" />
                     ) : (
@@ -213,11 +213,11 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-medium text-sm truncate">{user.name}</p>
-                    <p className="text-slate-400 text-xs truncate">{user.email}</p>
+                    <p className="text-sky-900 font-medium text-sm truncate">{user.name}</p>
+                    <p className="text-sky-700 text-xs truncate">{user.email}</p>
                   </div>
                   <button className="p-2 rounded-lg hover:bg-slate-700/50 transition-colors">
-                    <Bell className="w-4 h-4 text-slate-400" />
+                    <Bell className="w-4 h-4 text-sky-400" />
                   </button>
                 </div>
               </motion.div>
@@ -225,7 +225,7 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
 
             {/* Main Navigation */}
             <nav className="flex-1 px-4 py-3 overflow-y-auto">
-              <h3 className={`text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-2 ${
+              <h3 className={`text-xs font-semibold text-sky-900 uppercase tracking-wider mb-3 px-2 ${
                 isCollapsed ? "text-center" : ""
               }`}>
                 {isCollapsed ? "Nav" : "Main Menu"}
@@ -247,8 +247,8 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
                       onClick={() => window.innerWidth < 768 && onClose()}
                       className={`group relative flex items-center gap-3 p-3 rounded-xl transition-all duration-200 ${
                         isActive
-                          ? "bg-blue-600/20 text-white border-l-3 border-blue-500"
-                          : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
+                          ? "bg-red-600 text-white border-l-3 border-blue-500"
+                          : "text-slate-500 hover:bg-red-700 hover:text-white"
                       } ${isCollapsed ? "justify-center" : ""}`}
                     >
                       <Icon className={`w-5 h-5 ${

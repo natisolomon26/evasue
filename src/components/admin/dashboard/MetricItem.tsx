@@ -14,13 +14,13 @@ export function MetricItem({ icon: Icon, label, value, trend }: MetricItemProps)
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-          <Icon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+          <Icon className="w-4 h-4 text-gray-600" />
         </div>
-        <span className="text-sm text-gray-700 dark:text-gray-300">{label}</span>
+        <span className="text-sm text-gray-700">{label}</span>
       </div>
       <div className="flex items-center gap-2">
-        <span className="font-semibold text-gray-900 dark:text-white">{value}</span>
+        <span className="font-semibold text-gray-900">{value}</span>
         <TrendingUp className={`w-4 h-4 ${
           trend === 'up' ? 'text-green-600' : 'text-red-600 rotate-180'
         }`} />
