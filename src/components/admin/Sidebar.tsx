@@ -18,9 +18,7 @@ import {
   User,
   Bell,
   Shield,
-  BarChart3,
-  Download,
-  Upload
+  BarChart3
 } from "lucide-react";
 
 interface SidebarProps {
@@ -61,7 +59,7 @@ const navItems = [
     href: "/admin/events", 
     icon: Calendar, 
     permissionKey: "events",
-    badge: "5" // Example: pending events count
+    badge: "5" 
   },
   { 
     name: "Materials", 
@@ -75,14 +73,14 @@ const navItems = [
     href: "/admin/newsletter", 
     icon: Mail, 
     permissionKey: "newsletter",
-    badge: "12" // Example: new subscribers
+    badge: "12" 
   },
   { 
     name: "Users", 
     href: "/admin/users", 
     icon: Users, 
     permissionKey: "users",
-    badge: "3" // Example: new users
+    badge: "3" 
   },
   { 
     name: "Analytics", 
@@ -100,17 +98,8 @@ const navItems = [
   },
 ];
 
-const quickActions = [
-  { name: "Create Event", icon: Calendar, href: "/admin/events?create=true" },
-  { name: "Send Newsletter", icon: Mail, href: "/admin/newsletter?compose=true" },
-  { name: "Upload Material", icon: Upload, href: "/admin/materials?upload=true" },
-  { name: "View Reports", icon: Download, href: "/admin/analytics?reports=true" },
-];
-
 export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
   const [user, setUser] = useState<User | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
 
@@ -128,20 +117,6 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
     fetchUser();
   }, []);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const toggleExpanded = (itemName: string) => {
-    setExpandedItems(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(itemName)) {
-        newSet.delete(itemName);
-      } else {
-        newSet.add(itemName);
-      }
-      return newSet;
-    });
-  };
-
-  // Filter nav items based on permissions
   const allowedNavItems = navItems.filter(item => {
     if (!user) return false;
     if (user.role === "superadmin") return true;
@@ -150,9 +125,7 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
   });
 
   const isActiveLink = (href: string) => {
-    if (href === "/admin") {
-      return pathname === "/admin";
-    }
+    if (href === "/admin") return pathname === "/admin";
     return pathname.startsWith(href);
   };
 
@@ -165,12 +138,20 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
     }
   };
 
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case "superadmin": return "Super Admin";
+      case "admin": return "Admin";
+      default: return "Staff";
+    }
+  };
+
   return (
     <>
       {/* Mobile toggle */}
       <button
         onClick={onToggle}
-        className="md:hidden fixed top-4 left-4 z-50 p-3 rounded-xl bg-gradient-to-br from-blue-600 to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+        className="md:hidden fixed top-4 left-4 z-50 p-3 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
       >
         <Menu className="w-5 h-5" />
       </button>
@@ -178,7 +159,7 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
       {/* Desktop collapse toggle */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="hidden md:flex fixed top-6 left-64 z-50 p-2 rounded-lg bg-white border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-200 -translate-x-1/2"
+        className="hidden md:flex fixed top-6 left-64 z-50 p-2 rounded-lg bg-white border border-slate-200 shadow-md hover:shadow-lg transition-all duration-200 -translate-x-1/2"
       >
         <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${isCollapsed ? "rotate-180" : ""}`} />
       </button>
@@ -191,26 +172,25 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
             animate={{ x: 0 }}
             exit={{ x: -320 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className={`fixed md:relative h-screen bg-gradient-to-b from-slate-900 to-slate-800 shadow-2xl z-40 ${
+            className={`fixed h-screen  bg-gradient-to-b from-slate-900 to-slate-800 shadow-2xl z-40 ${
               isCollapsed ? "w-20" : "w-80"
-            } transition-all duration-300`}
+            } transition-all duration-300 flex flex-col`}
           >
             {/* Header */}
-            <div className="p-6 border-b border-slate-700/50">
+            <div className="p-6 border-b border-slate-700/40">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md">
                   <Shield className="w-6 h-6 text-white" />
                 </div>
                 {!isCollapsed && (
                   <motion.div
-                    initial={{ opacity: 1 }}
+                    initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="flex-1 min-w-0"
                   >
                     <h2 className="text-xl font-bold text-white truncate">Admin Portal</h2>
                     <p className="text-slate-400 text-sm truncate">
-                      {user?.role === "superadmin" ? "Super Administrator" : 
-                       user?.role === "admin" ? "Administrator" : "Staff"}
+                      {user ? getRoleLabel(user.role) : "Loading..."}
                     </p>
                   </motion.div>
                 )}
@@ -222,13 +202,12 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-4 border-b border-slate-700/50"
+                className="px-6 py-4 border-b border-slate-700/40"
               >
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 backdrop-blur-sm">
-                  <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/40 backdrop-blur-sm hover:bg-slate-800/60 transition-colors">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm bg-gradient-to-br from-emerald-500 to-teal-600">
                     {user.avatar ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full" />
+                      <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover" />
                     ) : (
                       user.name?.charAt(0).toUpperCase() || "U"
                     )}
@@ -237,46 +216,19 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
                     <p className="text-white font-medium text-sm truncate">{user.name}</p>
                     <p className="text-slate-400 text-xs truncate">{user.email}</p>
                   </div>
-                  <button className="p-1 rounded-lg hover:bg-slate-700/50 transition-colors">
+                  <button className="p-2 rounded-lg hover:bg-slate-700/50 transition-colors">
                     <Bell className="w-4 h-4 text-slate-400" />
                   </button>
                 </div>
               </motion.div>
             )}
 
-            {/* Quick Actions */}
-            {!isCollapsed && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.1 }}
-                className="p-4 border-b border-slate-700/50"
-              >
-                <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-2">
-                  Quick Actions
-                </h3>
-                <div className="space-y-1">
-                  {quickActions.map((action) => (
-                    <Link
-                      key={action.name}
-                      href={action.href}
-                      onClick={() => window.innerWidth < 768 && onClose()}
-                      className="flex items-center gap-3 p-2 rounded-lg text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-200 group"
-                    >
-                      <action.icon className="w-4 h-4 text-slate-400 group-hover:text-blue-400" />
-                      <span className="text-sm font-medium">{action.name}</span>
-                    </Link>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
             {/* Main Navigation */}
-            <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
+            <nav className="flex-1 px-4 py-3 overflow-y-auto">
               <h3 className={`text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-2 ${
                 isCollapsed ? "text-center" : ""
               }`}>
-                {isCollapsed ? "..." : "Navigation"}
+                {isCollapsed ? "Nav" : "Main Menu"}
               </h3>
               
               {allowedNavItems.map((item, idx) => {
@@ -288,35 +240,34 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
                     key={item.href}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
+                    transition={{ delay: idx * 0.03 }}
                   >
                     <Link
                       href={item.href}
                       onClick={() => window.innerWidth < 768 && onClose()}
-                      className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group relative ${
+                      className={`group relative flex items-center gap-3 p-3 rounded-xl transition-all duration-200 ${
                         isActive
-                          ? "bg-blue-600/20 text-white border-l-4 border-blue-500"
+                          ? "bg-blue-600/20 text-white border-l-3 border-blue-500"
                           : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
                       } ${isCollapsed ? "justify-center" : ""}`}
                     >
-                      <Icon className={`w-5 h-5 transition-colors ${
+                      <Icon className={`w-5 h-5 ${
                         isActive ? "text-blue-400" : "text-slate-400 group-hover:text-blue-400"
                       }`} />
                       
                       {!isCollapsed && (
                         <>
-                          <span className="font-medium flex-1">{item.name}</span>
+                          <span className="font-medium">{item.name}</span>
                           {item.badge && (
-                            <span className="px-2 py-1 text-xs bg-red-500 text-white rounded-full min-w-5 text-center">
+                            <span className="ml-auto px-2 py-0.5 text-xs bg-rose-500/90 text-white rounded-full min-w-[1.5rem] text-center">
                               {item.badge}
                             </span>
                           )}
                         </>
                       )}
 
-                      {/* Tooltip for collapsed state */}
                       {isCollapsed && (
-                        <div className="absolute left-full ml-2 px-2 py-1 bg-slate-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50 shadow-lg">
+                        <div className="absolute left-full ml-2 px-2 py-1 bg-slate-900/95 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 shadow-lg border border-slate-700">
                           {item.name}
                           {item.badge && ` (${item.badge})`}
                         </div>
@@ -328,24 +279,16 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
             </nav>
 
             {/* Footer Actions */}
-            <div className="p-4 border-t border-slate-700/50">
-              <div className={`space-y-1 ${isCollapsed ? "flex flex-col items-center" : ""}`}>
-                <button
-                  onClick={handleLogout}
-                  className={`flex items-center gap-3 p-3 rounded-xl text-slate-300 hover:bg-red-600/20 hover:text-red-400 transition-all duration-200 group w-full ${
-                    isCollapsed ? "justify-center" : ""
-                  }`}
-                >
-                  <LogOut className="w-5 h-5" />
-                  {!isCollapsed && <span className="font-medium">Logout</span>}
-                </button>
-                
-                
-                
-                
-              </div>
-
-              
+            <div className="p-4 border-t border-slate-700/40">
+              <button
+                onClick={handleLogout}
+                className={`flex items-center gap-3 p-3 rounded-xl text-slate-300 hover:bg-rose-500/15 hover:text-rose-400 transition-all duration-200 w-full ${
+                  isCollapsed ? "justify-center" : ""
+                }`}
+              >
+                <LogOut className="w-5 h-5" />
+                {!isCollapsed && <span className="font-medium">Logout</span>}
+              </button>
             </div>
 
             {/* Mobile close button */}
@@ -357,18 +300,18 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
             </button>
           </motion.aside>
         )}
-
-        {/* Mobile overlay */}
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-30"
-          />
-        )}
       </AnimatePresence>
+
+      {/* Mobile overlay */}
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-30"
+        />
+      )}
     </>
   );
 }
