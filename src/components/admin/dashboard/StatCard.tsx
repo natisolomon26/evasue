@@ -35,7 +35,7 @@ export function StatCard({
     <Link href={href}>
       <motion.div
         whileHover={{ y: -2 }}
-        className="group p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200"
+        className="group p-6 bg-sky-200/50 rounded-2xl shadow-sm border border-sky-200 hover:shadow-lg transition-all duration-200"
       >
         <div className="flex items-center justify-between mb-4">
           <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colorClasses[color]} flex items-center justify-center text-white`}>
@@ -49,11 +49,11 @@ export function StatCard({
           </div>
         </div>
         
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{value}</h3>
-        <p className="text-gray-600 dark:text-gray-400 text-sm">{title}</p>
+        <h3 className="text-2xl font-bold text-sky-900 mb-1">{value}</h3>
+        <p className="text-sky-800 text-sm">{title}</p>
         
-        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
+        <div className="mt-4 pt-4 border-t border-sky-200 ">
+          <div className="flex items-center gap-2 text-sm text-sky-500 group-hover:text-sky-700 transition-colors">
             <span>View details</span>
             <Eye className="w-4 h-4" />
           </div>
