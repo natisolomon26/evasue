@@ -4,41 +4,43 @@ import { authMiddleware } from "@/lib/authMiddleware";
 import Event from "@/models/Event";
 import { connectToDatabase } from "@/lib/mongoose";
 
-export async function POST(
-  req: Request,
-  context: { params: Promise<{ id: string }> }
-) {
+
+// src/app/api/events/[id]/register/route.ts
+// Updated registration route
+export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
   await connectToDatabase();
 
-  const user = authMiddleware(req);
+  // ✅ Authenticate user first
+  const user = await authMiddleware(req);
   if (user instanceof NextResponse) return user;
 
   const { id } = await context.params;
-  const { answers } = await req.json();
+  const { answers, isGuest } = await req.json();
 
-  if (!answers || typeof answers !== "object") {
-    return NextResponse.json({ error: "Invalid registration data" }, { status: 400 });
-  }
+  console.log("📝 REGISTRATION API - Received:", { answers, isGuest });
 
   const event = await Event.findById(id);
   if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
 
-  // Validate required fields
-  for (const field of event.formFields) {
-    if (field.required && !answers[field.label]) {
-      return NextResponse.json({ error: `Missing required field: ${field.label}` }, { status: 400 });
-    }
+  try {
+    // ✅ Store as plain object and include userId
+    event.registrations.push({ 
+      answers: answers,  // Plain object, not Map
+      registeredAt: new Date(),
+      isGuest: isGuest || false,
+      userId: user.id   // ✅ Critical for receipt lookup
+    });
+
+    console.log("💾 Saving event with user registration...");
+    await event.save();
+    console.log("✅ Registration saved successfully");
+
+    return NextResponse.json({ message: "Registered successfully" });
+  } catch (error) {
+    console.error("❌ Registration error:", error);
+    return NextResponse.json({ error: "Failed to save registration" }, { status: 500 });
   }
-
-  const existing = event.registrations.find((r) => r.userId === user.id);
-  if (existing) return NextResponse.json({ error: "User already registered" }, { status: 400 });
-
-  event.registrations.push({ userId: user.id, answers, registeredAt: new Date() });
-  await event.save();
-
-  return NextResponse.json({ message: "Registered successfully" });
 }
-
 // -----------------------
 // GET all registrations for an event
 // -----------------------

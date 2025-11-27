@@ -5,12 +5,6 @@ import RegistrationModal from "@/components/events/RegistrationModal";
 import PaymentModal from "@/components/events/PaymentModal";
 import { EventType } from "@/types/events";
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-}
-
 interface PaymentData {
   eventId: string;
   eventTitle: string;
@@ -30,20 +24,30 @@ export default function EventsPage() {
   const [selectedEvent, setSelectedEvent] = useState<EventType | null>(null);
   const [openRegistration, setOpenRegistration] = useState(false);
   const [openPayment, setOpenPayment] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
+  const [downloadingReceipt, setDownloadingReceipt] = useState<string | null>(null);
 
-  // Fetch current user
-  const fetchCurrentUser = async () => {
+  // Session-based registration tracking
+  const getSessionRegistrations = () => {
+    if (typeof window === 'undefined') return {};
     try {
-      const res = await fetch("/api/auth/me");
-      if (res.ok) {
-        const userData = await res.json();
-        setCurrentUser(userData);
-      }
-    } catch (error) {
-      console.error("Failed to fetch user:", error);
+      return JSON.parse(sessionStorage.getItem('eventRegistrations') || '{}');
+    } catch {
+      return {};
     }
+  };
+
+  const setSessionRegistration = (eventId: string) => {
+    if (typeof window === 'undefined') return;
+    const registrations = getSessionRegistrations();
+    registrations[eventId] = true;
+    sessionStorage.setItem('eventRegistrations', JSON.stringify(registrations));
+  };
+
+  // Check if user is registered for an event (session-based)
+  const isUserRegistered = (event: EventType) => {
+    const sessionRegistrations = getSessionRegistrations();
+    return !!sessionRegistrations[event._id];
   };
 
   const fetchEvents = async () => {
@@ -51,6 +55,7 @@ export default function EventsPage() {
     try {
       const res = await fetch("/api/events");
       const data = await res.json();
+      console.log("📅 EVENTS DATA FROM API:", data.events);
       setEvents(data.events || []);
     } catch (err) {
       console.error(err);
@@ -62,20 +67,22 @@ export default function EventsPage() {
 
   useEffect(() => {
     fetchEvents();
-    fetchCurrentUser();
+    
+    // Debug: Log session registrations on load
+    console.log("🔍 Session registrations on load:", getSessionRegistrations());
   }, []);
 
-  // NEW: Handle registration form submission
+  // Handle registration form submission
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleRegistrationSubmit = (formData: any) => {
     if (!selectedEvent) return;
 
-    console.log("Form submitted:", formData);
+    console.log("📝 Form submitted:", formData);
     console.log("Selected event:", selectedEvent);
 
     // If it's a paid event, open payment modal
     if (selectedEvent.isPaid && selectedEvent.price) {
-      console.log("Opening payment modal for paid event");
+      console.log("💰 Opening payment modal for paid event");
       
       setPaymentData({
         eventId: selectedEvent._id,
@@ -89,7 +96,7 @@ export default function EventsPage() {
       setOpenPayment(true);
     } else {
       // For free events, complete registration immediately
-      console.log("Completing free event registration");
+      console.log("🎫 Completing free event registration");
       completeRegistration(formData);
     }
   };
@@ -100,26 +107,37 @@ export default function EventsPage() {
     if (!selectedEvent) return;
 
     try {
-      console.log("Calling registration API...");
+      console.log("🚀 Calling registration API...");
       
       const res = await fetch(`/api/events/${selectedEvent._id}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers: formData }),
+        body: JSON.stringify({ 
+          answers: formData,
+          isGuest: true 
+        }),
       });
 
       if (res.ok) {
-        console.log("Registration successful");
-        fetchEvents(); // Refresh events to update registration status
+        console.log("✅ Registration successful");
+        
+        // 🔥 Store registration in sessionStorage
+        setSessionRegistration(selectedEvent._id);
+        console.log("💾 Saved to session:", getSessionRegistrations());
+        
+        // Refresh events to update registration count
+        setTimeout(() => {
+          fetchEvents();
+        }, 500);
         setOpenRegistration(false);
-        alert("Registered successfully!");
+        alert("Registered successfully! You can now download your receipt.");
       } else {
         const errorData = await res.json();
         throw new Error(errorData.error || "Registration failed");
       }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      console.error("Registration error:", error);
+      console.error("❌ Registration error:", error);
       alert(`Registration failed: ${error.message}`);
     }
   };
@@ -128,7 +146,7 @@ export default function EventsPage() {
   const handlePaymentSuccess = async () => {
     if (!paymentData || !selectedEvent) return;
 
-    console.log("Payment successful, completing registration...");
+    console.log("💳 Payment successful, completing registration...");
     
     // Complete registration after successful payment
     await completeRegistration(paymentData.userData);
@@ -139,16 +157,51 @@ export default function EventsPage() {
 
   // Handle payment cancellation
   const handlePaymentCancel = () => {
-    console.log("Payment cancelled");
+    console.log("❌ Payment cancelled");
     // User cancelled payment, allow them to retry registration
     setOpenPayment(false);
     setOpenRegistration(true);
   };
 
-  // Check if user is registered for an event
-  const isUserRegistered = (event: EventType) => {
-    if (!currentUser) return false;
-    return event.registrations?.some(reg => reg.userId === currentUser.id);
+  // Handle receipt download
+  const handleDownloadReceipt = async (eventId: string) => {
+    setDownloadingReceipt(eventId);
+    try {
+      const response = await fetch(`/api/events/${eventId}/receipt`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to download receipt');
+      }
+
+      // Create blob from response and trigger download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      
+      // Get filename from Content-Disposition header or use default
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = `receipt-${eventId}.pdf`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+      
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+    } catch (error) {
+      console.error('Error downloading receipt:', error);
+      alert('Failed to download receipt. Please try again.');
+    } finally {
+      setDownloadingReceipt(null);
+    }
   };
 
   // Get registration count for an event
@@ -187,7 +240,7 @@ export default function EventsPage() {
             Upcoming Events
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Discover and register for amazing events. Connect, learn, and grow with our community.
+            Discover and register for amazing events. No account required!
           </p>
         </div>
 
@@ -208,6 +261,14 @@ export default function EventsPage() {
               const registered = isUserRegistered(event);
               const pastEvent = isPastEvent(event.date);
               const registrationCount = getRegistrationCount(event);
+              const isDownloading = downloadingReceipt === event._id;
+
+              console.log(`🎯 RENDERING EVENT: "${event.title}"`, {
+                registered,
+                pastEvent,
+                registrationCount,
+                sessionRegistered: getSessionRegistrations()[event._id]
+              });
 
               return (
                 <div 
@@ -264,41 +325,52 @@ export default function EventsPage() {
                       )}
                     </div>
 
-                    {/* Registration Button */}
+                    {/* Registration/Receipt Button */}
                     <button
                       onClick={() => {
-                        if (!currentUser) {
-                          alert("Please log in to register for events");
-                          return;
+                        if (registered) {
+                          // Download receipt
+                          handleDownloadReceipt(event._id);
+                        } else {
+                          setSelectedEvent(event);
+                          setOpenRegistration(true);
                         }
-                        setSelectedEvent(event);
-                        setOpenRegistration(true);
                       }}
-                      disabled={pastEvent || registered}
-                      className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
+                      disabled={pastEvent || isDownloading}
+                      className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
                         pastEvent
                           ? 'bg-gray-400 text-white cursor-not-allowed'
                           : registered
-                          ? 'bg-green-600 text-white cursor-not-allowed'
+                          ? 'bg-green-600 hover:bg-green-700 text-white'
                           : event.isPaid
                           ? 'bg-purple-600 hover:bg-purple-700 text-white'
                           : 'bg-blue-600 hover:bg-blue-700 text-white'
-                      }`}
+                      } ${isDownloading ? 'opacity-50 cursor-wait' : ''}`}
                     >
-                      {pastEvent
-                        ? 'Event Ended'
-                        : registered
-                        ? '✓ Registered'
-                        : event.isPaid
-                        ? `Register - ETB ${event.price}`
-                        : 'Register Now (Free)'}
+                      {isDownloading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Downloading...
+                        </>
+                      ) : pastEvent ? (
+                        'Event Ended'
+                      ) : registered ? (
+                        <>
+                          <span>📄</span>
+                          Download Receipt
+                        </>
+                      ) : event.isPaid ? (
+                        `Register - ETB ${event.price}`
+                      ) : (
+                        'Register Now (Free)'
+                      )}
                     </button>
 
                     {/* Additional info */}
                     {registered && (
                       <div className="mt-3 text-center">
                         <p className="text-sm text-green-600 font-medium">
-                          Youre registered for this event!
+                          Youre registered! Download your confirmation receipt.
                         </p>
                       </div>
                     )}
@@ -309,6 +381,13 @@ export default function EventsPage() {
                         </p>
                       </div>
                     )}
+                    
+                    {/* Guest registration note */}
+                    <div className="mt-3 text-center">
+                      <p className="text-xs text-green-600">
+                        ✅ No account required
+                      </p>
+                    </div>
                   </div>
                 </div>
               );
@@ -322,7 +401,7 @@ export default function EventsPage() {
             open={openRegistration}
             setOpen={setOpenRegistration}
             event={selectedEvent}
-            onSuccess={handleRegistrationSubmit} // Updated to new handler
+            onSuccess={handleRegistrationSubmit}
           />
         )}
 

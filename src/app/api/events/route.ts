@@ -60,20 +60,25 @@ export async function POST(req: Request) {
 }
 
 // GET all events
+// GET all events
 export async function GET() {
   await connectToDatabase();
   try {
     const events = await Event.find()
-      .select('title description date location createdBy isPaid price formFields registrations createdAt updatedAt') // Added isPaid and price
+      .select('title description date location createdBy isPaid price formFields registrations createdAt updatedAt')
       .sort({ date: -1 });
     
-    // DEBUG: Log what's being returned
-    console.log("Returning events:", events.map(e => ({
-      title: e.title,
-      isPaid: e.isPaid,
-      price: e.price,
-      formFields: e.formFields.length
-    })));
+    // 🔥 ENHANCED DEBUG - Show registration counts
+    console.log("📋 EVENTS API - Returning events with registrations:");
+    events.forEach(event => {
+      console.log(`Event: ${event.title}`, {
+        isPaid: event.isPaid,
+        price: event.price,
+        formFieldsCount: event.formFields.length,
+        registrationsCount: event.registrations?.length || 0, // ✅ Add this
+        hasRegistrations: event.registrations && event.registrations.length > 0 // ✅ Add this
+      });
+    });
     
     return NextResponse.json({ events }, { status: 200 });
   } catch (err) {

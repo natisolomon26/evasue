@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import EventsTable from "@/components/admin/events/EventsTable";
 import CreateEventModal from "@/components/admin/events/CreateEventModal";
-import EventStatsCards from "@/components/admin/events/EventsStatsCards"; // imported
 import { EventType } from "@/types/events";
 
 export default function EventsPage() {
@@ -43,8 +42,7 @@ export default function EventsPage() {
         <h1 className="text-3xl font-bold">Events</h1>
       </div>
 
-      {/* Stats Cards */}
-      <EventStatsCards events={events} />
+      
 
       {/* Events Table */}
       <motion.div
