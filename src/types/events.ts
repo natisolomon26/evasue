@@ -1,6 +1,4 @@
-
-
-// In @/types/events.ts
+// In your types/events.ts
 export interface EventType {
   _id: string;
   title: string;
@@ -8,9 +6,13 @@ export interface EventType {
   date: string;
   location: string;
   createdBy: string;
-  formFields: FormField[]; // Make sure this exists
+  isPaid: boolean;        // Change from optional to required
+  price: number;          // Change from optional to required
+  formFields: FormField[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   registrations: any[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface FormField {

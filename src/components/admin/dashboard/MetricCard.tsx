@@ -19,7 +19,7 @@ export function MetricCard({
   trend 
 }: MetricCardProps) {
   return (
-    <div className="p-6 bg-green-200/20 rounded-2xl shadow-sm border border-green-200">
+    <div className="p-6 bg-white/20 rounded-2xl shadow-sm border border-white">
       <div className="flex items-center gap-4">
         <div className="w-12 h-12 rounded-xl bg-green-600 flex items-center justify-center">
           <Icon className="w-6 h-6 text-white" />

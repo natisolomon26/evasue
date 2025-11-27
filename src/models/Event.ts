@@ -20,6 +20,8 @@ export interface IEvent extends Document {
   date: Date;
   location: string;
   createdBy: string;
+  isPaid: boolean;          // Add this
+  price: number;            // Add this
   formFields: IFormField[];
   registrations: IRegistration[];
   createdAt: Date;
@@ -33,6 +35,8 @@ const EventSchema = new Schema<IEvent>(
     date: { type: Date, required: true },
     location: { type: String, default: "" },
     createdBy: { type: String, required: true },
+    isPaid: { type: Boolean, default: false },
+    price: { type: Number, default: 0 },  
     formFields: [
       {
         label: { type: String, required: true },

@@ -13,13 +13,16 @@ interface EventType {
   _id: string;
   title: string;
   formFields: FormField[];
+  isPaid?: boolean;
+  price?: number;
 }
 
 interface RegistrationModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   event: EventType;
-  onSuccess?: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onSuccess: (formData: any) => void; // Changed to accept form data
 }
 
 export default function RegistrationModal({ open, setOpen, event, onSuccess }: RegistrationModalProps) {
@@ -39,6 +42,7 @@ export default function RegistrationModal({ open, setOpen, event, onSuccess }: R
   };
 
   const handleSubmit = async () => {
+    // Validate required fields
     for (const field of event.formFields) {
       if (field.required && !answers[field.label]) {
         return alert(`Field "${field.label}" is required`);
@@ -46,19 +50,18 @@ export default function RegistrationModal({ open, setOpen, event, onSuccess }: R
     }
 
     setLoading(true);
+    
     try {
-      const res = await fetch(`/api/events/${event._id}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to register");
-
-      onSuccess?.();
-      setOpen(false);
-      setAnswers({});
+      // Instead of calling the API directly, pass the form data to parent
+      // The parent component will handle payment flow for paid events
+      // or direct registration for free events
+      
+      onSuccess(answers); // Pass form data to parent
+      
+      // Don't close modal here - parent will handle closing after payment
+      // setOpen(false);
+      // setAnswers({});
+      
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       alert(err.message);
@@ -71,7 +74,14 @@ export default function RegistrationModal({ open, setOpen, event, onSuccess }: R
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white w-full max-w-2xl rounded-lg p-6 max-h-[80vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">{event.title} - Registration</h2>
+          <div>
+            <h2 className="text-xl font-bold">{event.title} - Registration</h2>
+            {event.isPaid && event.price && (
+              <p className="text-sm text-purple-600 mt-1">
+                Paid Event - ETB {event.price} (Payment required after form submission)
+              </p>
+            )}
+          </div>
           <button 
             onClick={() => setOpen(false)}
             className="text-gray-500 hover:text-gray-700"
@@ -137,6 +147,7 @@ export default function RegistrationModal({ open, setOpen, event, onSuccess }: R
           <button 
             onClick={() => setOpen(false)}
             className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+            disabled={loading}
           >
             Cancel
           </button>
@@ -145,9 +156,19 @@ export default function RegistrationModal({ open, setOpen, event, onSuccess }: R
             className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-green-400"
             disabled={loading}
           >
-            {loading ? "Submitting..." : "Submit"}
+            {loading ? "Processing..." : event.isPaid ? "Continue to Payment" : "Submit Registration"}
           </button>
         </div>
+
+        {/* Payment Info Note */}
+        {event.isPaid && (
+          <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+            <p className="text-sm text-purple-700">
+              <strong>Note:</strong> After submitting this form, youll be redirected to complete your payment. 
+              Your registration will only be confirmed after successful payment.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

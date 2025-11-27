@@ -247,8 +247,8 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
                       onClick={() => window.innerWidth < 768 && onClose()}
                       className={`group relative flex items-center gap-3 p-3 rounded-xl transition-all duration-200 ${
                         isActive
-                          ? "bg-red-600 text-white border-l-3 border-blue-500"
-                          : "text-slate-500 hover:bg-red-700 hover:text-white"
+                          ? "bg-sky-600 text-white border-l-3 border-blue-500"
+                          : "text-slate-500 hover:bg-sky-700 hover:text-white"
                       } ${isCollapsed ? "justify-center" : ""}`}
                     >
                       <Icon className={`w-5 h-5 ${
