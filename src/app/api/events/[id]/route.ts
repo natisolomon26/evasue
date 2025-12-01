@@ -1,97 +1,87 @@
-// src/app/api/events/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import Event from "@/models/Event";
-import { connectToDatabase } from "@/lib/mongoose";
-import { authMiddleware } from "@/lib/authMiddleware";
+import { connectDB } from "@/lib/db";
 
-// -----------------------
-// GET SINGLE EVENT
-// -----------------------
-export async function GET(
-  req: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const normalizeFormFields = (formFields: any) => {
+  if (!Array.isArray(formFields) && typeof formFields === "string") {
+    formFields = JSON.parse(formFields);
+  }
+  if (!Array.isArray(formFields)) return [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return formFields.map((f: any) => ({
+    label: f.label ?? "",
+    type: f.type ?? "text",
+    required: f.required ?? false,
+    options: Array.isArray(f.options) ? f.options : []
+  }));
+};
+
+// Helper to get id from request
+const getId = async (req: NextRequest) => {
+  const url = new URL(req.url);
+  const parts = url.pathname.split("/");
+  return parts[parts.length - 1]; // last segment is the ID
+};
+
+// --------------------------
+// GET single event
+// --------------------------
+export async function GET(req: NextRequest) {
   try {
-    await connectToDatabase();
-
-    const { id } = await context.params;
-
+    await connectDB();
+    const id = await getId(req);
     const event = await Event.findById(id);
-    if (!event) {
-      return NextResponse.json({ error: "Event not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ event });
-  } catch (err) {
-    console.error("GET EVENT ERROR:", err);
-    return NextResponse.json(
-      { error: "Failed to fetch event" },
-      { status: 500 }
-    );
+    if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    return NextResponse.json(event, { status: 200 });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    console.error("Get Event Error:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
-// -----------------------
-// UPDATE EVENT
-// -----------------------
-export async function PUT(
-  req: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+// --------------------------
+// PUT update event
+// --------------------------
+export async function PUT(req: NextRequest) {
   try {
-    await connectToDatabase();
-
-    const user = await authMiddleware(req, {
-      requirePermission: { resource: "events", action: "update" },
-    });
-    if (user instanceof NextResponse) return user;
-
-    const { id } = await context.params;
+    await connectDB();
     const body = await req.json();
+    const id = await getId(req);
 
-    const event = await Event.findByIdAndUpdate(id, body, { new: true });
-    if (!event) {
-      return NextResponse.json({ error: "Event not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ message: "Event updated", event });
-  } catch (err) {
-    console.error("UPDATE EVENT ERROR:", err);
-    return NextResponse.json(
-      { error: "Failed to update event" },
-      { status: 500 }
+    const updatedEvent = await Event.findByIdAndUpdate(
+      id,
+      {
+        ...body,
+        formFields: body.formFields ? normalizeFormFields(body.formFields) : undefined
+      },
+      { new: true }
     );
+
+    if (!updatedEvent) return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    return NextResponse.json(updatedEvent, { status: 200 });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    console.error("Update Event Error:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
-// -----------------------
-// DELETE EVENT
-// -----------------------
-export async function DELETE(
-  req: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+// --------------------------
+// DELETE event
+// --------------------------
+export async function DELETE(req: NextRequest) {
   try {
-    await connectToDatabase();
+    await connectDB();
+    const id = await getId(req);
 
-    const user = await authMiddleware(req, {
-      requirePermission: { resource: "events", action: "delete" },
-    });
-    if (user instanceof NextResponse) return user;
-
-    const { id } = await context.params;
-
-    const event = await Event.findByIdAndDelete(id);
-    if (!event) {
-      return NextResponse.json({ error: "Event not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ message: "Event deleted" });
-  } catch (err) {
-    console.error("DELETE EVENT ERROR:", err);
-    return NextResponse.json(
-      { error: "Failed to delete event" },
-      { status: 500 }
-    );
+    const deleted = await Event.findByIdAndDelete(id);
+    if (!deleted) return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    return NextResponse.json({ message: "Event deleted" }, { status: 200 });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    console.error("Delete Event Error:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

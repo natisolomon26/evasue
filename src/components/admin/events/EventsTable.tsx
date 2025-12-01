@@ -20,16 +20,18 @@ export default function EventsTable() {
   const [view, setView] = useState<"events" | "registrations">("events");
   const [selectedEvent, setSelectedEvent] = useState<EventType | null>(null);
 
-  // Fetch all events
+  // Fetch all events from backend
   const fetchEvents = async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/events");
       const data = await res.json();
-      setEvents(data.events || []);
+
+      // Backend returns a plain array, not { events: [...] }
+      setEvents(data || []);
     } catch (err) {
       console.error(err);
-      alert("Failed to fetch events");
+      alert("Failed to fetch events from backend");
     } finally {
       setLoading(false);
     }
@@ -42,29 +44,22 @@ export default function EventsTable() {
   // Filter events based on search and status
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
+                          event.description.toLowerCase().includes(searchTerm.toLowerCase());
+
     const isActive = new Date(event.date) > new Date();
     const matchesStatus = 
       statusFilter === "all" ||
       (statusFilter === "active" && isActive) ||
       (statusFilter === "past" && !isActive);
-    
+
     return matchesSearch && matchesStatus;
   });
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     return {
-      date: d.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
-      }),
-      time: d.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      })
+      date: d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+      time: d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
     };
   };
 
@@ -72,7 +67,7 @@ export default function EventsTable() {
     const isActive = new Date(dateStr) > new Date();
     return {
       text: isActive ? "Active" : "Past",
-      color: isActive ? "text-green-600 bg-green-100" : "text-gray-600 bg-gray-100"
+      color: isActive ? "text-green-600 bg-green-100" : "text-gray-600 bg-gray-100",
     };
   };
 
@@ -82,8 +77,8 @@ export default function EventsTable() {
   };
 
   const handleBackToEvents = () => {
-    setView("events");
     setSelectedEvent(null);
+    setView("events");
   };
 
   return (
@@ -126,7 +121,7 @@ export default function EventsTable() {
       <div className="p-6">
         {view === "events" ? (
           <>
-            {/* Filters and Actions */}
+            {/* Filters and Create Button */}
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
               <div className="flex flex-col sm:flex-row gap-4 flex-1">
                 <div className="relative flex-1 max-w-md">
@@ -141,7 +136,7 @@ export default function EventsTable() {
                     🔍
                   </div>
                 </div>
-                
+
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "past")}
@@ -188,7 +183,7 @@ export default function EventsTable() {
                       filteredEvents.map((event) => {
                         const { date, time } = formatDate(event.date);
                         const status = getStatus(event.date);
-                        
+
                         return (
                           <tr key={event._id} className="hover:bg-gray-100 transition-colors">
                             <td className="px-6 py-4">
@@ -216,43 +211,20 @@ export default function EventsTable() {
                                 className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium transition-colors"
                               >
                                 <span>👥</span>
-                                {event.registrations?.length || 0} Registered
+                                {event.registrations?.length ?? 0} Registered
                               </button>
                             </td>
-                            <td className="px-6 py-4">
-                              <div className="flex gap-3">
-                                <button
-                                  onClick={() => setEditData(event)}
-                                  className="text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
-                                >
-                                  <span>✏️</span>
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() => setDeleteData(event)}
-                                  className="text-red-600 hover:text-red-800 transition-colors flex items-center gap-1"
-                                >
-                                  <span>🗑️</span>
-                                  Delete
-                                </button>
-                              </div>
+                            <td className="px-6 py-4 flex gap-3">
+                              <button onClick={() => setEditData(event)} className="text-blue-600 hover:text-blue-800 flex items-center gap-1">✏️ Edit</button>
+                              <button onClick={() => setDeleteData(event)} className="text-red-600 hover:text-red-800 flex items-center gap-1">🗑️ Delete</button>
                             </td>
                           </tr>
                         );
                       })
                     ) : (
                       <tr>
-                        <td colSpan={5} className="px-6 py-8 text-center">
-                          <div className="text-gray-500">
-                            <div className="text-4xl mb-2">📅</div>
-                            <div className="font-medium">No events found</div>
-                            <div className="text-sm mt-1">
-                              {searchTerm || statusFilter !== "all" 
-                                ? "Try adjusting your search or filters" 
-                                : "Create your first event to get started"
-                              }
-                            </div>
-                          </div>
+                        <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                          No events found
                         </td>
                       </tr>
                     )}
@@ -261,7 +233,7 @@ export default function EventsTable() {
               </div>
             </div>
 
-            {/* Summary Stats */}
+            {/* Stats */}
             {!loading && events.length > 0 && (
               <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
@@ -291,22 +263,10 @@ export default function EventsTable() {
         )}
       </div>
 
-      {/* MODALS */}
-      <CreateEventModal
-        open={openCreate}
-        setOpen={setOpenCreate}
-        refreshEvents={fetchEvents}
-      />
-      <EditEventModal
-        data={editData}
-        setData={setEditData}
-        refreshEvents={fetchEvents}
-      />
-      <DeleteEventModal
-        data={deleteData}
-        setData={setDeleteData}
-        refreshEvents={fetchEvents}
-      />
+      {/* Modals */}
+      <CreateEventModal open={openCreate} setOpen={setOpenCreate} refreshEvents={fetchEvents} />
+      <EditEventModal data={editData} setData={setEditData} refreshEvents={fetchEvents} />
+      <DeleteEventModal data={deleteData} setData={setDeleteData} refreshEvents={fetchEvents} />
     </div>
   );
 }

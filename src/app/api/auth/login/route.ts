@@ -1,5 +1,5 @@
 // src/app/api/auth/login/route.ts
-import { connectToDatabase } from "@/lib/mongoose";
+import { connectDB } from "@/lib/db";
 import { signJwt, setAuthCookie } from "@/lib/jwt";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    await connectToDatabase();
+    await connectDB();
 
     const { email, password } = await req.json();
 
