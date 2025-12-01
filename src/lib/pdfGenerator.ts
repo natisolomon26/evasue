@@ -1,394 +1,211 @@
-// lib/pdfGenerator.ts
+// lib/pdfGenerator.ts - COMPACT RECEIPT (CORRECTED PARAMETER)
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
-interface ReceiptData {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  event: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  registration: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  user: any;
+interface IFormField {
+  label: string;
+  type: "text" | "textarea" | "email" | "number" | "select" | "checkbox";
+  options?: string[];
+  required?: boolean;
 }
 
-export async function generateReceiptPDF(data: ReceiptData) {
-  const { event, registration, user } = data;
-  
-  // Create a new PDF document
+export interface ReceiptData {
+  event: {
+    _id: string;
+    title: string;
+    description: string;
+    date: string;
+    location: string;
+    isPaid: boolean;
+    price: number;
+    formFields: IFormField[];
+  };
+  registration: {
+    _id: string;
+    answers: Map<string, string> | Record<string, string>;
+    registeredAt: string;
+    isGuest: boolean;
+    userId: string;
+  };
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+export async function generateReceiptPDF(data: ReceiptData) { // ✅ FIXED: "data: ReceiptData"
+  const { event, registration, user } = data; // ✅ now works
+
   const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([600, 800]);
+  const page = pdfDoc.addPage([450, 550]);
   const { width, height } = page.getSize();
-  
-  // Load fonts
+
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-  
-  // Brand colors - EvaSUE colors
-  const primaryColor = rgb(0.1, 0.3, 0.6); // Dark blue
-  const secondaryColor = rgb(0.9, 0.2, 0.1); // Red accent
-  const accentColor = rgb(0.2, 0.6, 0.3); // Green accent
-  const textColor = rgb(0.2, 0.2, 0.2);
-  const lightTextColor = rgb(0.5, 0.5, 0.5);
-  
-  // ===== HEADER SECTION =====
-  // Background header
-  page.drawRectangle({
-    x: 0,
-    y: height - 120,
-    width: width,
-    height: 120,
-    color: rgb(0.95, 0.95, 0.98),
-  });
-  
-  // EvaSUE Logo/Title
-  page.drawText('EvaSUE', {
-    x: 50,
-    y: height - 60,
-    size: 24,
-    font: boldFont,
-    color: primaryColor,
-  });
-  
-  page.drawText('EVANGELICAL STUDENTS UNION OF ETHIOPIA', {
-    x: 50,
-    y: height - 85,
-    size: 10,
-    font: font,
-    color: lightTextColor,
-  });
-  
-  page.drawText('REGISTRATION CONFIRMATION', {
-    x: 50,
-    y: height - 105,
-    size: 14,
-    font: boldFont,
-    color: secondaryColor,
-  });
-  
-  // Receipt ID and Date
-  const receiptId = registration._id?.toString().slice(-8).toUpperCase() || 'N/A';
-  const currentDate = new Date().toLocaleDateString();
-  
-  page.drawText(`Receipt #: ${receiptId}`, {
-    x: width - 200,
-    y: height - 70,
-    size: 10,
-    font: font,
-    color: lightTextColor,
-  });
-  
-  page.drawText(`Generated: ${currentDate}`, {
-    x: width - 200,
-    y: height - 85,
-    size: 10,
-    font: font,
-    color: lightTextColor,
-  });
-  
-  let yPosition = height - 160;
-  
-  // ===== EVENT INFORMATION SECTION =====
-  page.drawText('EVENT DETAILS', {
-    x: 50,
-    y: yPosition,
-    size: 12,
-    font: boldFont,
-    color: primaryColor,
-  });
-  
-  yPosition -= 25;
-  
-  // Event info box
-  page.drawRectangle({
-    x: 50,
-    y: yPosition - 90,
-    width: width - 100,
-    height: 90,
-    color: rgb(0.98, 0.98, 1),
-    borderColor: primaryColor,
-    borderWidth: 1,
-  });
-  
-  const eventInfo = [
-    { label: 'Event Title:', value: event.title || 'N/A' },
-    { label: 'Date & Time:', value: event.date ? new Date(event.date).toLocaleString() : 'TBA' },
-    { label: 'Location:', value: event.location || 'To be announced' },
-    { label: 'Organizer:', value: 'EvaSUE' }
-  ];
-  
-  eventInfo.forEach((info, index) => {
-    const infoY = yPosition - (index * 20);
-    
-    page.drawText(info.label, {
-      x: 70,
-      y: infoY,
-      size: 10,
-      font: boldFont,
-      color: textColor,
-    });
-    
-    page.drawText(info.value, {
-      x: 150,
-      y: infoY,
-      size: 10,
-      font: font,
-      color: textColor,
-    });
-  });
-  
-  yPosition -= 120;
-  
-  // ===== ATTENDEE INFORMATION SECTION =====
-  page.drawText('ATTENDEE INFORMATION', {
-    x: 50,
-    y: yPosition,
-    size: 12,
-    font: boldFont,
-    color: primaryColor,
-  });
-  
-  yPosition -= 25;
-  
-  // Attendee info box
-  page.drawRectangle({
-    x: 50,
-    y: yPosition - 70,
-    width: width - 100,
-    height: 70,
-    color: rgb(0.98, 0.98, 1),
-    borderColor: primaryColor,
-    borderWidth: 1,
-  });
-  
-  const attendeeInfo = [
-    { label: 'Full Name:', value: user?.name || 'Guest User' },
-    { label: 'Email:', value: user?.email || 'N/A' },
-    { label: 'Registration Date:', value: registration.registeredAt ? new Date(registration.registeredAt).toLocaleString() : 'N/A' },
-    { label: 'Registration Type:', value: registration.isGuest ? 'Guest' : 'Member' }
-  ];
-  
-  attendeeInfo.forEach((info, index) => {
-    const infoY = yPosition - (index * 16);
-    
-    page.drawText(info.label, {
-      x: 70,
-      y: infoY,
-      size: 9,
-      font: boldFont,
-      color: textColor,
-    });
-    
-    page.drawText(info.value, {
-      x: 150,
-      y: infoY,
-      size: 9,
-      font: font,
-      color: textColor,
-    });
-  });
-  
-  yPosition -= 90;
-  
-  // ===== FORM RESPONSES SECTION =====
-  // Fix: Properly extract answers from registration
-  let answers = {};
-  
-  if (registration.answers) {
-    // Handle both Map and Object formats
-    if (registration.answers instanceof Map) {
-      answers = Object.fromEntries(registration.answers);
-    } else if (typeof registration.answers === 'object') {
-      answers = registration.answers;
+
+  const primary = rgb(0.1, 0.1, 0.1);
+  const light = rgb(0.5, 0.5, 0.5);
+  const paidBg = rgb(0.9, 0.98, 0.95);
+  const paidText = rgb(0.0, 0.5, 0.3);
+  const headerBg = rgb(0.1, 0.3, 0.6);
+
+  // Normalize answers
+  let answers: Record<string, string> = {};
+  if (registration.answers instanceof Map) {
+    answers = Object.fromEntries(registration.answers);
+  } else {
+    answers = { ...registration.answers };
+  }
+
+  // Get attendee name
+  const name = answers['Full Name'] || answers['Name'] || answers['fullName'] || user.name || 'Attendee';
+
+  // Extract up to 2 extra fields (skip name-like and email if not needed)
+  const extraFields: { label: string; value: string }[] = [];
+  const skipLabels = ['Full Name', 'Name', 'fullName'];
+
+  for (const field of event.formFields) {
+    if (extraFields.length >= 2) break;
+    const val = answers[field.label]?.trim();
+    if (val && !skipLabels.includes(field.label)) {
+      // Honor: if email is in form but you don't want to show it, skip
+      if (field.label === 'Email' && !data.event.formFields.some(f => f.label === 'Email')) {
+        // This won't happen, but just in case
+      }
+      // Since your debug shows Email in answers, and form includes it,
+      // we show it — unless you want to hide it via showUserEmail
+      // For now: show all non-name fields
+      extraFields.push({ label: field.label, value: val });
     }
   }
-  
-  const answerEntries = Object.entries(answers);
-  
-  if (answerEntries.length > 0) {
-    page.drawText('ADDITIONAL INFORMATION', {
-      x: 50,
-      y: yPosition,
-      size: 12,
-      font: boldFont,
-      color: primaryColor,
-    });
-    
-    yPosition -= 25;
-    
-    // Answers box
-    const answersHeight = Math.min(answerEntries.length * 25 + 20, 200);
-    page.drawRectangle({
-      x: 50,
-      y: yPosition - answersHeight,
-      width: width - 100,
-      height: answersHeight,
-      color: rgb(0.98, 0.98, 1),
-      borderColor: primaryColor,
-      borderWidth: 1,
-    });
-    
-    answerEntries.forEach(([key, value], index) => {
-      if (index < 8) { // Limit to 8 fields to prevent overflow
-        const answerY = yPosition - (index * 25);
-        
-        page.drawText(`${key}:`, {
-          x: 70,
-          y: answerY,
-          size: 9,
-          font: boldFont,
-          color: textColor,
-        });
-        
-        // Handle long values by truncating
-        const displayValue = String(value).length > 40 
-          ? String(value).substring(0, 40) + '...' 
-          : String(value);
-          
-        page.drawText(displayValue, {
-          x: 200,
-          y: answerY,
-          size: 9,
-          font: font,
-          color: textColor,
-        });
-      }
-    });
-    
-    yPosition -= (answersHeight + 30);
-  }
-  
-  // ===== PAYMENT INFORMATION SECTION =====
-  if (event.isPaid && event.price > 0) {
-    page.drawText('PAYMENT DETAILS', {
-      x: 50,
-      y: yPosition,
-      size: 12,
-      font: boldFont,
-      color: primaryColor,
-    });
-    
-    yPosition -= 25;
-    
-    // Payment box with accent color
-    page.drawRectangle({
-      x: 50,
-      y: yPosition - 60,
-      width: width - 100,
-      height: 60,
-      color: rgb(0.9, 0.95, 0.9),
-      borderColor: accentColor,
-      borderWidth: 2,
-    });
-    
-    const paymentInfo = [
-      { label: 'Amount Paid:', value: `ETB ${event.price.toFixed(2)}` },
-      { label: 'Payment Status:', value: 'PAID' }, // Removed emoji
-      { label: 'Payment Date:', value: registration.registeredAt ? new Date(registration.registeredAt).toLocaleDateString() : 'N/A' },
-    ];
-    
-    paymentInfo.forEach((info, index) => {
-      const paymentY = yPosition - (index * 18);
-      
-      page.drawText(info.label, {
-        x: 70,
-        y: paymentY,
-        size: 10,
-        font: boldFont,
-        color: textColor,
-      });
-      
-      // Use text styling instead of emoji for paid status
-      let valueColor = textColor;
-      if (index === 1) { // Payment Status line
-        valueColor = accentColor;
-      }
-      
-      page.drawText(info.value, {
-        x: 150,
-        y: paymentY,
-        size: 10,
-        font: index === 1 ? boldFont : font, // Make "PAID" bold
-        color: valueColor,
-      });
-    });
-    
-    yPosition -= 80;
-  } else {
-    // Free event payment section
-    page.drawText('PAYMENT INFORMATION', {
-      x: 50,
-      y: yPosition,
-      size: 12,
-      font: boldFont,
-      color: primaryColor,
-    });
-    
-    yPosition -= 25;
-    
-    page.drawRectangle({
-      x: 50,
-      y: yPosition - 40,
-      width: width - 100,
-      height: 40,
-      color: rgb(0.98, 0.98, 0.98),
-      borderColor: lightTextColor,
-      borderWidth: 1,
-    });
-    
-    page.drawText('This is a free event. No payment required.', {
-      x: 70,
-      y: yPosition - 25,
+
+  // === HEADER ===
+  page.drawRectangle({
+    x: 0,
+    y: height - 90,
+    width,
+    height: 90,
+    color: headerBg,
+  });
+
+  page.drawText("EvaSUE", {
+    x: width / 2 - 35,
+    y: height - 45,
+    size: 18,
+    font: boldFont,
+    color: rgb(1, 1, 1),
+  });
+
+  const title = event.title.length > 28 ? event.title.substring(0, 28) + "..." : event.title;
+  page.drawText(title, {
+    x: width / 2 - (7 * title.length) / 2,
+    y: height - 68,
+    size: 12,
+    font: boldFont,
+    color: rgb(1, 1, 1),
+  });
+
+  // === ATTENDEE NAME ===
+  let y = height - 120;
+  page.drawText(name.toUpperCase(), {
+    x: width / 2 - (9 * name.length) / 2,
+    y,
+    size: 16,
+    font: boldFont,
+    color: primary,
+  });
+
+  y -= 40;
+
+  // === EVENT DATE & TIME ===
+  const eventDate = new Date(event.date);
+  const dateLine = eventDate.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const timeLine = eventDate.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  page.drawText(dateLine, {
+    x: width / 2 - 50,
+    y,
+    size: 14,
+    font: boldFont,
+    color: primary,
+  });
+  y -= 22;
+  page.drawText(timeLine, {
+    x: width / 2 - 30,
+    y,
+    size: 14,
+    font: boldFont,
+    color: primary,
+  });
+
+  y -= 30;
+
+  // === EXTRA FIELDS ===
+  for (const field of extraFields) {
+    const display = `${field.label}: ${field.value.length > 20 ? field.value.substring(0, 20) + '...' : field.value}`;
+    page.drawText(display, {
+      x: width / 2 - 80,
+      y,
       size: 10,
-      font: font,
-      color: textColor,
+      font,
+      color: light,
     });
-    
-    yPosition -= 60;
+    y -= 18;
   }
-  
-  // ===== FOOTER SECTION =====
-  const footerY = 60;
-  
-  page.drawLine({
-    start: { x: 50, y: footerY + 30 },
-    end: { x: width - 50, y: footerY + 30 },
-    thickness: 1,
-    color: rgb(0.8, 0.8, 0.8),
-  });
-  
-  page.drawText('This receipt confirms your successful registration for the event.', {
-    x: 50,
-    y: footerY + 15,
-    size: 9,
-    font: font,
-    color: lightTextColor,
-  });
-  
-  const contactInfo = [
-    'EvaSUE - Evangelical Students Union of Ethiopia',
-    'Email: support@evasue.net | Phone: +251 XXX XXX XXX',
-    'Thank you for your registration! We look forward to seeing you at the event.'
-  ];
-  
-  contactInfo.forEach((line, index) => {
-    page.drawText(line, {
-      x: 50,
-      y: footerY - (index * 12),
-      size: 8,
-      font: font,
-      color: lightTextColor,
+
+  y -= 10;
+
+  // === PAID BADGE ===
+  if (event.isPaid && event.price > 0) {
+    page.drawRectangle({
+      x: width / 2 - 50,
+      y: y - 20,
+      width: 100,
+      height: 24,
+      color: paidBg,
+      borderColor: paidText,
+      borderWidth: 1,
     });
+    page.drawText("PAID", {
+      x: width / 2 - 30,
+      y: y - 5,
+      size: 12,
+      font: boldFont,
+      color: paidText,
+    });
+  } else {
+    page.drawText("🎟️ FREE ADMISSION", {
+      x: width / 2 - 60,
+      y: y - 5,
+      size: 12,
+      font: boldFont,
+      color: light,
+    });
+  }
+
+  // === FOOTER ===
+  page.drawText("Present this receipt at entry", {
+    x: width / 2 - 80,
+    y: 60,
+    size: 9,
+    font,
+    color: light,
   });
-  
-  // Security watermark
-  page.drawText(`Confidential - Generated for ${user?.name || user?.email || 'attendee'}`, {
-    x: width - 300,
-    y: 20,
-    size: 7,
-    font: font,
-    color: rgb(0.9, 0.9, 0.9),
-    opacity: 0.5,
+  page.drawText("support@evasue.net", {
+    x: width / 2 - 55,
+    y: 45,
+    size: 8,
+    font,
+    color: light,
   });
-  
-  // Return the PDF as a buffer
+
   return await pdfDoc.save();
 }

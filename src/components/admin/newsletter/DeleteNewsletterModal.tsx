@@ -1,49 +1,34 @@
+// components/admin/newsletter/DeleteNewsletterModal.tsx
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, X, Trash2, Shield, User, Loader2 } from "lucide-react";
+import { AlertTriangle, X, Trash2, Loader2, Mail } from "lucide-react";
 import { useState } from "react";
 
-interface DeleteUserModalProps {
-  open: boolean;
-  setOpen: (val: boolean) => void;
-  userId: string | null;
-  onDelete: () => void;
+interface Newsletter {
+  id: string;
+  title: string;
+  subject: string;
+  status: string;
 }
 
-export default function DeleteUserModal({ open, setOpen, userId, onDelete }: DeleteUserModalProps) {
+interface DeleteNewsletterModalProps {
+  open: boolean;
+  setOpen: (val: boolean) => void;
+  newsletter: Newsletter | null;
+  onDeleted: () => void;
+}
+
+export default function DeleteNewsletterModal({ open, setOpen, newsletter, onDeleted }: DeleteNewsletterModalProps) {
   const [loading, setLoading] = useState(false);
-  const [userData, setUserData] = useState<{ name: string; email: string; role: string } | null>(null);
-
-  // Fetch user details when modal opens
-  useState(() => {
-    if (open && userId && !userData) {
-      fetchUserDetails();
-    }
-  });
-
-  const fetchUserDetails = async () => {
-    try {
-      const res = await fetch(`/api/admin/users/${userId}`);
-      if (res.ok) {
-        const user = await res.json();
-        setUserData({
-          name: user.name,
-          email: user.email,
-          role: user.role
-        });
-      }
-    } catch (error) {
-      console.error("Failed to fetch user details:", error);
-    }
-  };
+  const [confirmationText, setConfirmationText] = useState("");
 
   async function handleDelete() {
-    if (!userId) return;
+    if (!newsletter) return;
     
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/users/${userId}`, { 
+      const res = await fetch(`/api/admin/newsletters/${newsletter.id}`, { 
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -53,43 +38,27 @@ export default function DeleteUserModal({ open, setOpen, userId, onDelete }: Del
       
       if (!res.ok) throw new Error("Delete failed");
       
-      onDelete();
+      onDeleted();
       setOpen(false);
-      // Show success message or trigger refresh in parent
+      setConfirmationText("");
     } catch (err) {
       console.error(err);
-      alert("Failed to delete user");
+      alert("Failed to delete newsletter");
     } finally {
       setLoading(false);
     }
   }
 
   const handleClose = () => {
-    setUserData(null);
+    setConfirmationText("");
     setOpen(false);
   };
 
-  const getRoleColor = (role: string) => {
-    const colors = {
-      superadmin: "bg-purple-100 text-purple-800 border-purple-200",
-      admin: "bg-blue-100 text-blue-800 border-blue-200",
-      staff: "bg-green-100 text-green-800 border-green-200"
-    };
-    return colors[role as keyof typeof colors] || "bg-gray-100 text-gray-800 border-gray-200";
-  };
-
-  const getRoleIcon = (role: string) => {
-    const icons = {
-      superadmin: Shield,
-      admin: Shield,
-      staff: User
-    };
-    return icons[role as keyof typeof icons] || User;
-  };
+  const isDeleteEnabled = confirmationText === "DELETE" && !loading;
 
   return (
     <AnimatePresence>
-      {open && userId && (
+      {open && newsletter && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -105,7 +74,7 @@ export default function DeleteUserModal({ open, setOpen, userId, onDelete }: Del
                     <AlertTriangle className="w-6 h-6" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold">Delete User</h2>
+                    <h2 className="text-2xl font-bold">Delete Newsletter</h2>
                     <p className="text-red-100">This action cannot be undone</p>
                   </div>
                 </div>
@@ -128,54 +97,42 @@ export default function DeleteUserModal({ open, setOpen, userId, onDelete }: Del
                   <div>
                     <h3 className="font-semibold text-red-800 mb-1">Warning: Destructive Action</h3>
                     <p className="text-red-700 text-sm">
-                      You are about to permanently delete this user account. This action cannot be undone and all associated data will be lost.
+                      You are about to permanently delete this newsletter. This action cannot be undone.
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* User Information */}
+              {/* Newsletter Information */}
               <div className="bg-gray-50 rounded-xl p-4 mb-6">
-                <h4 className="font-medium text-gray-900 mb-3">User Details</h4>
-                {userData ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Name</span>
-                      <span className="font-semibold text-gray-900">{userData.name}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Email</span>
-                      <span className="font-medium text-gray-900">{userData.email}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Role</span>
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getRoleColor(userData.role)}`}>
-                        {(() => {
-                          const Icon = getRoleIcon(userData.role);
-                          return <Icon className="w-3 h-3" />;
-                        })()}
-                        {userData.role.charAt(0).toUpperCase() + userData.role.slice(1)}
-                      </span>
-                    </div>
+                <h4 className="font-medium text-gray-900 mb-3">Newsletter Details</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Title</span>
+                    <span className="font-semibold text-gray-900">{newsletter.title}</span>
                   </div>
-                ) : (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
-                    <span className="text-gray-500 ml-2">Loading user details...</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Subject</span>
+                    <span className="font-medium text-gray-900">{newsletter.subject}</span>
                   </div>
-                )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Status</span>
+                    <span className="capitalize text-sm text-gray-600">{newsletter.status}</span>
+                  </div>
+                </div>
               </div>
 
               {/* Confirmation Text */}
               <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
-                <p className="text-sm text-yellow-800 text-center">
-                  <strong>Type DELETE</strong> in the field below to confirm this action
+                <p className="text-sm text-yellow-800 text-center mb-3">
+                  <strong>Type "DELETE"</strong> to confirm this action
                 </p>
                 <input
                   type="text"
+                  value={confirmationText}
+                  onChange={(e) => setConfirmationText(e.target.value)}
                   placeholder="Type DELETE to confirm"
-                  className="w-full mt-3 px-4 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-center font-mono"
-                  id="confirmationInput"
+                  className="w-full px-4 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-center font-mono"
                 />
               </div>
 
@@ -190,7 +147,7 @@ export default function DeleteUserModal({ open, setOpen, userId, onDelete }: Del
                 </button>
                 <button
                   onClick={handleDelete}
-                  disabled={loading}
+                  disabled={!isDeleteEnabled}
                   className="flex-1 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2 disabled:cursor-not-allowed"
                 >
                   {loading ? (
@@ -201,7 +158,7 @@ export default function DeleteUserModal({ open, setOpen, userId, onDelete }: Del
                   ) : (
                     <>
                       <Trash2 className="w-5 h-5" />
-                      Delete User
+                      Delete Newsletter
                     </>
                   )}
                 </button>
