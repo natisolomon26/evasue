@@ -1,9 +1,26 @@
-// components/RegistrationView.tsx - Updated version
+// components/RegistrationView.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Event, Registration } from '@/types';
-import { X, Download, Mail, Phone, Calendar, User, Search, Filter, MapPin, CreditCard } from 'lucide-react';
+import { 
+  X, 
+  Download, 
+  Mail, 
+  Phone, 
+  Calendar, 
+  User, 
+  Search, 
+  Filter, 
+  RefreshCw,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Users,
+  TrendingUp,
+  Eye
+} from 'lucide-react';
 
 interface RegistrationViewProps {
   event: Event;
@@ -11,33 +28,22 @@ interface RegistrationViewProps {
   onClose: () => void;
 }
 
+type ViewMode = 'all' | 'paid' | 'pending' | 'failed';
+type SortBy = 'date' | 'name' | 'amount' | 'status';
+
 export default function RegistrationView({ event, isOpen, onClose }: RegistrationViewProps) {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [paymentFilter, setPaymentFilter] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<ViewMode>('all');
+  const [sortBy, setSortBy] = useState<SortBy>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
-
-  useEffect(() => {
-    if (isOpen && event._id) {
-      fetchRegistrations();
-    }
-  }, [isOpen, event._id]);
-
-  const fetchRegistrations = async () => {
-    try {
-      const response = await fetch(`/api/registrations?eventId=${event._id}`);
-      const data = await response.json();
-      setRegistrations(data.registrations || []);
-    } catch (error) {
-      console.error('Failed to fetch registrations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [autoRefresh, setAutoRefresh] = useState(true);
 
   // Helper function to get field value by label
-  const getFieldValue = (registration: Registration, fieldLabel: string): string => {
+  const getFieldValue = useCallback((registration: Registration, fieldLabel: string): string => {
     // Find field ID by label
     const field = event.formFields?.find(f => 
       f.label.toLowerCase().includes(fieldLabel.toLowerCase())
@@ -54,43 +60,159 @@ export default function RegistrationView({ event, isOpen, onClose }: Registratio
     });
     
     return fieldId ? registration.answers[fieldId] : 'N/A';
+  }, [event.formFields]);
+
+  const fetchRegistrations = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const response = await fetch(`/api/registrations?eventId=${event._id}`);
+      const data = await response.json();
+      setRegistrations(data.registrations || []);
+    } catch (error) {
+      console.error('Failed to fetch registrations:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [event._id]);
+
+  useEffect(() => {
+    if (isOpen && event._id) {
+      fetchRegistrations();
+    }
+  }, [isOpen, event._id, fetchRegistrations]);
+
+  // Auto-refresh
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (isOpen && autoRefresh && !loading) {
+      interval = setInterval(() => {
+        fetchRegistrations();
+      }, 10000); // Refresh every 10 seconds
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isOpen, autoRefresh, loading, fetchRegistrations]);
+
+  // Filter and sort registrations
+  const filteredRegistrations = registrations
+    .filter(reg => {
+      // Search filter
+      const searchLower = searchTerm.toLowerCase();
+      const matchesSearch = 
+        Object.values(reg.answers).some(val => 
+          val.toLowerCase().includes(searchLower)
+        ) ||
+        reg.email.toLowerCase().includes(searchLower) ||
+        getFieldValue(reg, 'name').toLowerCase().includes(searchLower);
+
+      // View mode filter
+      const matchesView = 
+        viewMode === 'all' || 
+        (viewMode === 'paid' && reg.paymentStatus === 'completed') ||
+        (viewMode === 'pending' && reg.paymentStatus === 'pending') ||
+        (viewMode === 'failed' && reg.paymentStatus === 'failed');
+
+      return matchesSearch && matchesView;
+    })
+    .sort((a, b) => {
+      let aValue: any, bValue: any;
+      
+      switch (sortBy) {
+        case 'date':
+          aValue = new Date(a.registeredAt).getTime();
+          bValue = new Date(b.registeredAt).getTime();
+          break;
+        case 'name':
+          aValue = getFieldValue(a, 'name').toLowerCase();
+          bValue = getFieldValue(b, 'name').toLowerCase();
+          break;
+        case 'amount':
+          aValue = a.amountPaid || 0;
+          bValue = b.amountPaid || 0;
+          break;
+        case 'status':
+          aValue = a.paymentStatus;
+          bValue = b.paymentStatus;
+          break;
+        default:
+          return 0;
+      }
+      
+      return sortOrder === 'asc' 
+        ? aValue > bValue ? 1 : -1
+        : aValue < bValue ? 1 : -1;
+    });
+
+  // Statistics
+  const stats = {
+    total: registrations.length,
+    paid: registrations.filter(r => r.paymentStatus === 'completed').length,
+    pending: registrations.filter(r => r.paymentStatus === 'pending').length,
+    failed: registrations.filter(r => r.paymentStatus === 'failed').length,
+    revenue: registrations
+      .filter(r => r.paymentStatus === 'completed')
+      .reduce((sum, reg) => sum + (reg.amountPaid || 0), 0),
+    pendingValue: registrations
+      .filter(r => r.paymentStatus === 'pending')
+      .reduce((sum, reg) => sum + (event.isPaid ? event.price : 0), 0)
   };
 
-  const filteredRegistrations = registrations.filter(reg => {
-    // Search filter
-    const searchLower = searchTerm.toLowerCase();
-    const matchesSearch = 
-      // Search in all answers
-      Object.values(reg.answers).some(val => 
-        val.toLowerCase().includes(searchLower)
-      ) ||
-      reg.email.toLowerCase().includes(searchLower) ||
-      // Search by name
-      getFieldValue(reg, 'name').toLowerCase().includes(searchLower);
-
-    // Payment filter
-    const matchesPayment = 
-      paymentFilter === 'all' || 
-      reg.paymentStatus === paymentFilter;
-
-    return matchesSearch && matchesPayment;
-  });
-
-  const getPaymentStatusBadge = (status: string) => {
+  const getPaymentStatusBadge = (registration: Registration) => {
+    const status = registration.paymentStatus;
+    const isOldPending = status === 'pending' && 
+      new Date(registration.createdAt) < new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
     switch (status) {
       case 'completed':
-        return <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">Paid</span>;
+        return (
+          <div className="flex flex-col">
+            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded flex items-center">
+              <CheckCircle className="h-3 w-3 mr-1" />
+              Paid
+            </span>
+            {registration.paymentType && (
+              <span className="text-xs text-gray-500 mt-1">{registration.paymentType}</span>
+            )}
+          </div>
+        );
       case 'pending':
-        return <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded">Pending</span>;
+        return (
+          <div className="flex flex-col">
+            <span className={`px-2 py-1 text-xs font-medium rounded flex items-center ${
+              isOldPending 
+                ? 'bg-red-100 text-red-800' 
+                : 'bg-yellow-100 text-yellow-800'
+            }`}>
+              <Clock className="h-3 w-3 mr-1" />
+              {isOldPending ? 'Expired' : 'Pending'}
+            </span>
+            <span className="text-xs text-gray-500 mt-1">
+              {new Date(registration.createdAt).toLocaleDateString()}
+            </span>
+          </div>
+        );
       case 'failed':
-        return <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded">Failed</span>;
+        return (
+          <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded flex items-center">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            Failed
+          </span>
+        );
       default:
-        return <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded">Unknown</span>;
+        return (
+          <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded">
+            Unknown
+          </span>
+        );
     }
   };
 
   const exportToCSV = () => {
-    const headers = ['Name', 'Email', 'Phone', 'Registered At', 'Payment Status', 'Amount'];
+    const headers = ['Name', 'Email', 'Phone', 'Registered At', 'Payment Status', 'Amount', 'Transaction ID'];
     
     // Add custom form fields as headers
     event.formFields?.forEach(field => {
@@ -104,9 +226,10 @@ export default function RegistrationView({ event, isOpen, onClose }: Registratio
         getFieldValue(reg, 'name'),
         reg.email,
         getFieldValue(reg, 'phone'),
-        new Date(reg.registeredAt).toLocaleString(),
+        new Date(reg.registeredAt).toISOString(),
         reg.paymentStatus,
-        `$${reg.amountPaid || 0}`
+        reg.amountPaid || 0,
+        reg.transactionId || ''
       ];
 
       // Add custom form field values
@@ -126,11 +249,21 @@ export default function RegistrationView({ event, isOpen, onClose }: Registratio
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${event.title}_registrations.csv`.replace(/[^a-z0-9]/gi, '_');
+    a.download = `${event.title}_registrations_${new Date().toISOString().split('T')[0]}.csv`
+      .replace(/[^a-z0-9]/gi, '_');
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
+  };
+
+  const handleSort = (column: SortBy) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      setSortOrder('desc');
+    }
   };
 
   if (!isOpen) return null;
@@ -145,33 +278,88 @@ export default function RegistrationView({ event, isOpen, onClose }: Registratio
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="sticky top-0 bg-white border-b px-6 py-4 rounded-t-2xl">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-xl font-bold text-gray-900">Registrations for: {event.title}</h3>
                 <p className="text-sm text-gray-600">
-                  {registrations.length} registration{registrations.length !== 1 ? 's' : ''}
-                  {event.registrationsCount && ` (${event.registrationsCount} total)`}
+                  {stats.total} registration{stats.total !== 1 ? 's' : ''} • 
+                  ${stats.revenue} collected • 
+                  ${stats.pendingValue} pending
                 </p>
               </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={fetchRegistrations}
+                  disabled={refreshing}
+                  className="flex items-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                  Refresh
+                </button>
+                <button
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-gray-600 transition p-1"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 mb-4">
               <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition p-1"
+                onClick={() => setViewMode('all')}
+                className={`px-4 py-2 font-medium text-sm border-b-2 transition ${
+                  viewMode === 'all'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
               >
-                <X size={24} />
+                All ({stats.total})
+              </button>
+              <button
+                onClick={() => setViewMode('paid')}
+                className={`px-4 py-2 font-medium text-sm border-b-2 transition ${
+                  viewMode === 'paid'
+                    ? 'border-green-500 text-green-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Paid ({stats.paid})
+              </button>
+              <button
+                onClick={() => setViewMode('pending')}
+                className={`px-4 py-2 font-medium text-sm border-b-2 transition ${
+                  viewMode === 'pending'
+                    ? 'border-yellow-500 text-yellow-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Pending ({stats.pending})
+              </button>
+              <button
+                onClick={() => setViewMode('failed')}
+                className={`px-4 py-2 font-medium text-sm border-b-2 transition ${
+                  viewMode === 'failed'
+                    ? 'border-red-500 text-red-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Failed ({stats.failed})
               </button>
             </div>
 
-            {/* Filters and Search */}
+            {/* Search and Filters */}
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                   <input
                     type="text"
-                    placeholder="Search by name, email, or any field..."
+                    placeholder="Search by name, email, phone, or any field..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -183,15 +371,34 @@ export default function RegistrationView({ event, isOpen, onClose }: Registratio
                 <div className="flex items-center">
                   <Filter className="h-5 w-5 text-gray-400 mr-2" />
                   <select
-                    value={paymentFilter}
-                    onChange={(e) => setPaymentFilter(e.target.value)}
+                    value={sortBy}
+                    onChange={(e) => handleSort(e.target.value as SortBy)}
                     className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
-                    <option value="all">All Payments</option>
-                    <option value="completed">Paid</option>
-                    <option value="pending">Pending</option>
-                    <option value="failed">Failed</option>
+                    <option value="date">Sort by Date</option>
+                    <option value="name">Sort by Name</option>
+                    <option value="amount">Sort by Amount</option>
+                    <option value="status">Sort by Status</option>
                   </select>
+                  <button
+                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                    className="ml-2 px-2 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    {sortOrder === 'asc' ? '↑' : '↓'}
+                  </button>
+                </div>
+                
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="autoRefresh"
+                    checked={autoRefresh}
+                    onChange={(e) => setAutoRefresh(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 rounded"
+                  />
+                  <label htmlFor="autoRefresh" className="ml-2 text-sm text-gray-700">
+                    Auto-refresh
+                  </label>
                 </div>
                 
                 <button
@@ -217,7 +424,7 @@ export default function RegistrationView({ event, isOpen, onClose }: Registratio
                 <div className="text-4xl mb-4">📭</div>
                 <h4 className="text-xl font-semibold text-gray-700 mb-2">No Registrations Found</h4>
                 <p className="text-gray-600">
-                  {searchTerm || paymentFilter !== 'all' 
+                  {searchTerm || viewMode !== 'all' 
                     ? 'Try adjusting your search or filters'
                     : 'No one has registered for this event yet'
                   }
@@ -225,65 +432,146 @@ export default function RegistrationView({ event, isOpen, onClose }: Registratio
               </div>
             ) : (
               <>
-                {/* Stats Summary */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="text-2xl font-bold text-blue-900">{registrations.length}</div>
-                    <div className="text-sm text-blue-700">Total Registrations</div>
+                {/* Enhanced Stats Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+                    <div className="flex items-center">
+                      <div className="p-3 bg-blue-100 rounded-lg mr-4">
+                        <Users className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+                        <div className="text-sm text-gray-600">Total Registrations</div>
+                      </div>
+                    </div>
                   </div>
                   
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="text-2xl font-bold text-green-900">
-                      {registrations.filter(r => r.paymentStatus === 'completed').length}
+                  <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+                    <div className="flex items-center">
+                      <div className="p-3 bg-green-100 rounded-lg mr-4">
+                        <CheckCircle className="h-6 w-6 text-green-600" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">{stats.paid}</div>
+                        <div className="text-sm text-gray-600">Paid ({stats.revenue} ETB)</div>
+                      </div>
                     </div>
-                    <div className="text-sm text-green-700">Paid Registrations</div>
                   </div>
                   
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <div className="text-2xl font-bold text-yellow-900">
-                      {registrations.filter(r => r.paymentStatus === 'pending').length}
+                  <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+                    <div className="flex items-center">
+                      <div className="p-3 bg-yellow-100 rounded-lg mr-4">
+                        <Clock className="h-6 w-6 text-yellow-600" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">{stats.pending}</div>
+                        <div className="text-sm text-gray-600">Pending ({stats.pendingValue} ETB)</div>
+                      </div>
                     </div>
-                    <div className="text-sm text-yellow-700">Pending Payments</div>
                   </div>
                   
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                    <div className="text-2xl font-bold text-purple-900">
-                      ${registrations.reduce((sum, reg) => sum + (reg.amountPaid || 0), 0)}
+                  <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+                    <div className="flex items-center">
+                      <div className="p-3 bg-purple-100 rounded-lg mr-4">
+                        <TrendingUp className="h-6 w-6 text-purple-600" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">
+                          {stats.revenue + stats.pendingValue}
+                        </div>
+                        <div className="text-sm text-gray-600">Total Value</div>
+                      </div>
                     </div>
-                    <div className="text-sm text-purple-700">Total Revenue</div>
                   </div>
                 </div>
 
                 {/* Registrations Table */}
-                <div className="overflow-x-auto rounded-lg border border-gray-200">
+                <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registered</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleSort('name')}
+                        >
+                          <div className="flex items-center">
+                            <User className="h-4 w-4 mr-2" />
+                            Name {sortBy === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          </div>
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <div className="flex items-center">
+                            <Mail className="h-4 w-4 mr-2" />
+                            Email
+                          </div>
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <div className="flex items-center">
+                            <Phone className="h-4 w-4 mr-2" />
+                            Phone
+                          </div>
+                        </th>
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleSort('date')}
+                        >
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-2" />
+                            Registered {sortBy === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          </div>
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Payment Status
+                        </th>
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleSort('amount')}
+                        >
+                          <div className="flex items-center">
+                            <DollarSign className="h-4 w-4 mr-2" />
+                            Amount {sortBy === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          </div>
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {filteredRegistrations.map((registration) => {
                         const name = getFieldValue(registration, 'name');
                         const phone = getFieldValue(registration, 'phone');
+                        const isOldPending = registration.paymentStatus === 'pending' && 
+                          new Date(registration.createdAt) < new Date(Date.now() - 24 * 60 * 60 * 1000);
 
                         return (
-                          <tr key={registration._id} className="hover:bg-gray-50 transition">
+                          <tr 
+                            key={registration._id} 
+                            className={`hover:bg-gray-50 transition ${
+                              isOldPending ? 'bg-red-50' : ''
+                            }`}
+                          >
                             <td className="px-6 py-4">
                               <div className="flex items-center">
-                                <User className="h-4 w-4 text-gray-400 mr-2" />
+                                <div className={`p-2 rounded-lg mr-3 ${
+                                  registration.paymentStatus === 'completed' ? 'bg-green-100' :
+                                  registration.paymentStatus === 'pending' ? 
+                                    (isOldPending ? 'bg-red-100' : 'bg-yellow-100') :
+                                  'bg-gray-100'
+                                }`}>
+                                  <User className={`h-4 w-4 ${
+                                    registration.paymentStatus === 'completed' ? 'text-green-600' :
+                                    registration.paymentStatus === 'pending' ? 
+                                      (isOldPending ? 'text-red-600' : 'text-yellow-600') :
+                                    'text-gray-600'
+                                  }`} />
+                                </div>
                                 <div>
                                   <div className="font-medium text-gray-900">{name}</div>
-                                  {phone && phone !== 'N/A' && (
-                                    <div className="text-sm text-gray-500 flex items-center">
-                                      <Phone className="h-3 w-3 mr-1" />
-                                      {phone}
+                                  {isOldPending && (
+                                    <div className="text-xs text-red-600 mt-1 flex items-center">
+                                      <AlertCircle className="h-3 w-3 mr-1" />
+                                      Registration expired
                                     </div>
                                   )}
                                 </div>
@@ -292,7 +580,7 @@ export default function RegistrationView({ event, isOpen, onClose }: Registratio
                             <td className="px-6 py-4">
                               <div className="flex items-center text-gray-700">
                                 <Mail className="h-4 w-4 mr-2 text-gray-400" />
-                                {registration.email}
+                                <span className="truncate max-w-[200px]">{registration.email}</span>
                               </div>
                             </td>
                             <td className="px-6 py-4">
@@ -307,18 +595,16 @@ export default function RegistrationView({ event, isOpen, onClose }: Registratio
                                   {new Date(registration.registeredAt).toLocaleDateString()}
                                   <br />
                                   <span className="text-gray-500 text-xs">
-                                    {new Date(registration.registeredAt).toLocaleTimeString()}
+                                    {new Date(registration.registeredAt).toLocaleTimeString([], { 
+                                      hour: '2-digit', 
+                                      minute: '2-digit' 
+                                    })}
                                   </span>
                                 </div>
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              {getPaymentStatusBadge(registration.paymentStatus)}
-                              {registration.paymentType && (
-                                <div className="text-xs text-gray-500 mt-1">
-                                  {registration.paymentType}
-                                </div>
-                              )}
+                              {getPaymentStatusBadge(registration)}
                             </td>
                             <td className="px-6 py-4">
                               <div className="font-medium">
@@ -331,18 +617,46 @@ export default function RegistrationView({ event, isOpen, onClose }: Registratio
                               )}
                             </td>
                             <td className="px-6 py-4">
-                              <button
-                                onClick={() => setSelectedRegistration(registration)}
-                                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                              >
-                                View Details
-                              </button>
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => setSelectedRegistration(registration)}
+                                  className="flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                  title="View Details"
+                                >
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  Details
+                                </button>
+                                {registration.paymentStatus === 'pending' && !isOldPending && (
+                                  <button
+                                    onClick={() => {
+                                      // TODO: Implement resend payment link
+                                      alert('Resend payment link functionality coming soon!');
+                                    }}
+                                    className="text-green-600 hover:text-green-800 text-sm font-medium"
+                                    title="Resend Payment Link"
+                                  >
+                                    Resend
+                                  </button>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         );
                       })}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Pagination Info */}
+                <div className="mt-6 flex items-center justify-between text-sm text-gray-600">
+                  <div>
+                    Showing {filteredRegistrations.length} of {registrations.length} registrations
+                    {viewMode !== 'all' && ` (filtered by ${viewMode})`}
+                  </div>
+                  <div>
+                    Last updated: {new Date().toLocaleTimeString()}
+                    {autoRefresh && ' • Auto-refresh enabled'}
+                  </div>
                 </div>
               </>
             )}
@@ -358,7 +672,10 @@ export default function RegistrationView({ event, isOpen, onClose }: Registratio
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-bold">Registration Details</h3>
-                <button onClick={() => setSelectedRegistration(null)}>
+                <button 
+                  onClick={() => setSelectedRegistration(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
                   <X className="h-5 w-5" />
                 </button>
               </div>
