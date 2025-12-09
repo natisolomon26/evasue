@@ -1,166 +1,358 @@
+// components/admin/events/EditEventModal.tsx
 "use client";
 
 import { useState, useEffect } from "react";
-import { DollarSign, Calendar, FileText } from "lucide-react";
-import { EventType } from "@/types/events";
-
-interface FormField {
-  label: string;
-  type: "text" | "textarea" | "email" | "number" | "select" | "checkbox";
-  required?: boolean;
-  options?: string[];
-}
+import { Event } from "@/types";
+import { X, Save, Calendar, MapPin, DollarSign } from "lucide-react";
 
 interface EditEventModalProps {
-  data: EventType | null;
-  setData: (data: EventType | null) => void;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  event: Event;
   refreshEvents: () => void;
 }
 
-export default function EditEventModal({ data, setData, refreshEvents }: EditEventModalProps) {
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
-  const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
-  const [isPaid, setIsPaid] = useState(false);
-  const [price, setPrice] = useState("");
-  const [formFields, setFormFields] = useState<FormField[]>([]);
+export default function EditEventModal({ open, setOpen, event, refreshEvents }: EditEventModalProps) {
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    title: event.title,
+    description: event.description || "",
+    date: new Date(event.date).toISOString().slice(0, 16),
+    location: event.location || "",
+    isPaid: event.isPaid,
+    price: event.price || 0
+  });
+
+  const [formFields, setFormFields] = useState(event.formFields || []);
 
   useEffect(() => {
-    if (data) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTitle(data.title);
-      setDate(new Date(data.date).toISOString().slice(0,16));
-      setDescription(data.description || "");
-      setLocation(data.location || "");
-      setIsPaid(data.isPaid || false);
-      setPrice(data.price ? String(data.price) : "");
-      setFormFields(data.formFields || []);
+    if (open) {
+      setFormData({
+        title: event.title,
+        description: event.description || "",
+        date: new Date(event.date).toISOString().slice(0, 16),
+        location: event.location || "",
+        isPaid: event.isPaid,
+        price: event.price || 0
+      });
+      setFormFields(event.formFields || []);
     }
-  }, [data]);
+  }, [open, event]);
 
-  if (!data) return null;
-
-  const addField = () => setFormFields([...formFields, { label: "", type: "text", required: false }]);
-  const updateField = (i: number, key: keyof FormField, val: string | boolean) => {
-    const copy = [...formFields];
-    copy[i] = { ...copy[i], [key]: val };
-    setFormFields(copy);
-  };
-
-  const updateEvent = async () => {
-    if (!title || !date) return alert("Title and date are required");
-    if (isPaid && (!price || parseFloat(price) <= 0)) return alert("Please enter a valid price");
-
-    const eventData = {
-      title,
-      date,
-      description,
-      location,
-      isPaid,
-      price: isPaid ? parseFloat(price) : 0,
-      formFields: formFields.filter(f => f.label.trim() !== "")
-    };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
     try {
-      const res = await fetch(`/api/events/${data._id}`, {
+      const res = await fetch(`/api/events/${event._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(eventData),
+        body: JSON.stringify({
+          ...formData,
+          formFields: formFields
+        })
       });
 
-      if (!res.ok) {
+      if (res.ok) {
+        refreshEvents();
+        setOpen(false);
+        alert("Event updated successfully!");
+      } else {
         const error = await res.json();
-        return alert(error.error || "Failed to update event");
+        alert(error.error || "Failed to update event");
       }
-
-      refreshEvents();
-      setData(null);
     } catch (err) {
       console.error(err);
       alert("Failed to update event");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const addFormField = () => {
+    setFormFields([...formFields, {
+      _id: `temp-${Date.now()}`,
+      label: "",
+      type: "text",
+      required: false,
+      options: []
+    }]);
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updateFormField = (index: number, field: any) => {
+    const newFields = [...formFields];
+    newFields[index] = field;
+    setFormFields(newFields);
+  };
+
+  const removeFormField = (index: number) => {
+    setFormFields(formFields.filter((_, i) => i !== index));
+  };
+
+  if (!open) return null;
+
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100]">
-      <div className="bg-white w-full max-w-4xl rounded-xl shadow-xl flex flex-col h-[90vh]">
-        {/* Header */}
-        <div className="p-6 border-b flex justify-between items-center">
-          <h2 className="text-2xl font-bold">Edit Event</h2>
-          <button className="text-gray-600 hover:text-black text-xl" onClick={() => setData(null)}>✕</button>
-        </div>
-
-        {/* Body */}
-        <div className="p-6 overflow-y-auto flex-1 grid grid-cols-2 gap-6">
-          {/* Left Column - Event Info */}
-          <div className="space-y-6">
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 space-y-4">
-              <div>
-                <label className="font-semibold block mb-1">Event Title *</label>
-                <input type="text" className="border p-3 w-full rounded-lg" value={title} onChange={e => setTitle(e.target.value)} />
-              </div>
-              <div>
-                <label className="font-semibold block mb-1">Event Date & Time *</label>
-                <input type="datetime-local" className="border p-3 w-full rounded-lg" value={date} onChange={e => setDate(e.target.value)} />
-              </div>
-              <div>
-                <label className="font-semibold block mb-1">Description</label>
-                <textarea className="border p-3 w-full rounded-lg" rows={3} value={description} onChange={e => setDescription(e.target.value)} />
-              </div>
-              <div>
-                <label className="font-semibold block mb-1">Location</label>
-                <input type="text" className="border p-3 w-full rounded-lg" value={location} onChange={e => setLocation(e.target.value)} />
-              </div>
-
-              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" checked={isPaid} onChange={e => { setIsPaid(e.target.checked); if (!e.target.checked) setPrice(""); }} className="w-5 h-5" />
-                  <span className="font-medium">This is a paid event</span>
-                </label>
-                {isPaid && (
-                  <div className="pl-8 mt-2">
-                    <label className="font-semibold block mb-1">Ticket Price (ETB) *</label>
-                    <input type="number" min="0" step="0.01" className="border p-3 w-full rounded-lg" value={price} onChange={e => setPrice(e.target.value)} />
-                  </div>
-                )}
-              </div>
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setOpen(false)} />
+      
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+          {/* Header */}
+          <div className="sticky top-0 bg-white border-b px-6 py-4 rounded-t-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900">Edit Event</h3>
+              <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={24} />
+              </button>
             </div>
+            <p className="text-sm text-gray-600 mt-1">Update event details and registration form</p>
           </div>
 
-          {/* Right Column - Form Builder */}
-          <div className="bg-green-50 p-4 rounded-lg border border-green-200 flex flex-col h-full">
-            <div className="flex justify-between items-center mb-4">
-              <label className="font-semibold">Form Fields</label>
-              <button onClick={addField} className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">+ Add Field</button>
-            </div>
-            <div className="space-y-4 overflow-y-auto flex-1">
-              {formFields.length === 0 && <div className="text-center p-8 border-2 border-dashed border-gray-300 rounded-lg text-gray-500">No fields added yet</div>}
-              {formFields.map((field, i) => (
-                <div key={i} className="border rounded-lg p-4 bg-white shadow-sm">
-                  <input type="text" placeholder="Field Label" className="border p-2 rounded w-full mb-2" value={field.label} onChange={e => updateField(i, "label", e.target.value)} />
-                  <select className="border p-2 rounded w-full mb-2" value={field.type} onChange={e => updateField(i, "type", e.target.value as FormField['type'])}>
-                    <option value="text">Text</option>
-                    <option value="email">Email</option>
-                    <option value="number">Number</option>
-                    <option value="textarea">Textarea</option>
-                    <option value="select">Dropdown</option>
-                    <option value="checkbox">Checkbox</option>
-                  </select>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" checked={field.required || false} onChange={e => updateField(i, "required", e.target.checked)} /> Required
+          {/* Content */}
+          <form onSubmit={handleSubmit} className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Basic Info */}
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Event Title *
                   </label>
-                  <button className="text-red-600 text-sm mt-2 hover:text-red-800" onClick={() => setFormFields(formFields.filter((_, idx) => idx !== i))}>Remove</button>
+                  <input
+                    type="text"
+                    required
+                    value={formData.title}
+                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter event title"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Description
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    rows={4}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Describe your event"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Date & Time *
+                  </label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                    <input
+                      type="datetime-local"
+                      required
+                      value={formData.date}
+                      onChange={(e) => setFormData({...formData, date: e.target.value})}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Location & Pricing */}
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Location
+                  </label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                    <input
+                      type="text"
+                      value={formData.location}
+                      onChange={(e) => setFormData({...formData, location: e.target.value})}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter location or 'Online'"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.isPaid}
+                      onChange={(e) => setFormData({...formData, isPaid: e.target.checked})}
+                      className="h-5 w-5 text-blue-600 rounded"
+                    />
+                    <label className="ml-2 text-sm font-medium text-gray-700">
+                      This is a paid event
+                    </label>
+                  </div>
+
+                  {formData.isPaid && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Price ($)
+                      </label>
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.price}
+                          onChange={(e) => setFormData({...formData, price: parseFloat(e.target.value) || 0})}
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Enter price"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Registration Stats */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-medium text-blue-900 mb-2">Registration Statistics</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-blue-700">Total Registrations:</span>
+                      <span className="font-medium">{event.registrationsCount || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-blue-700">Created:</span>
+                      <span className="font-medium">
+                        {new Date(event.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Form Fields Section */}
+            <div className="mt-8">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-lg font-medium text-gray-900">Registration Form Fields</h4>
+                <button
+                  type="button"
+                  onClick={addFormField}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+                >
+                  + Add Field
+                </button>
+              </div>
+
+              {formFields.map((field, index) => (
+                <div key={field._id} className="border border-gray-200 rounded-lg p-4 mb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Field Label
+                      </label>
+                      <input
+                        type="text"
+                        value={field.label}
+                        onChange={(e) => updateFormField(index, {...field, label: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                        placeholder="e.g., Full Name"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Field Type
+                      </label>
+                      <select
+                        value={field.type}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        onChange={(e) => updateFormField(index, {...field, type: e.target.value as any})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                      >
+                        <option value="text">Text</option>
+                        <option value="email">Email</option>
+                        <option value="number">Number</option>
+                        <option value="textarea">Textarea</option>
+                        <option value="select">Select Dropdown</option>
+                        <option value="checkbox">Checkbox</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {field.type === "select" && (
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Options (comma-separated)
+                      </label>
+                      <input
+                        type="text"
+                        value={field.options?.join(", ") || ""}
+                        onChange={(e) => updateFormField(index, {...field, options: e.target.value.split(",").map(opt => opt.trim())})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                        placeholder="Option 1, Option 2, Option 3"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={field.required}
+                        onChange={(e) => updateFormField(index, {...field, required: e.target.checked})}
+                        className="h-4 w-4 text-blue-600 rounded"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">Required field</label>
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={() => removeFormField(index)}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
+                      Remove Field
+                    </button>
+                  </div>
                 </div>
               ))}
-            </div>
-          </div>
-        </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t flex justify-end gap-4 bg-white">
-          <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" onClick={() => setData(null)}>Cancel</button>
-          <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:bg-blue-400" onClick={updateEvent}>Save Changes</button>
+              {formFields.length === 0 && (
+                <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+                  <p className="text-gray-500">No form fields added yet</p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Add fields that attendees need to fill during registration
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="mt-8 pt-6 border-t border-gray-200 flex justify-end space-x-4">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex items-center px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

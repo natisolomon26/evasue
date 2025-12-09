@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import { Event, EventsResponse } from '@/types';
 import EventCard from '@/components/events/EventCard';
 import RegistrationModal from '@/components/events/RegistrationModal';
-import PaymentModal from '@/components/events/PaymentModal';
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -15,8 +14,6 @@ export default function EventsPage() {
   // Modals state
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [checkoutUrl, setCheckoutUrl] = useState<string>('');
 
   useEffect(() => {
     fetchEvents();
@@ -49,51 +46,53 @@ export default function EventsPage() {
     setShowRegistrationModal(true);
   };
 
-  const handleRegistrationSubmit = async (formData: any) => {
-    if (!selectedEvent) return;
+  // In your EventsPage component, update the handleRegistrationSubmit:
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const handleRegistrationSubmit = async (formData: any) => {
+  if (!selectedEvent) return;
 
-    try {
-      const registrationData = {
-        eventId: selectedEvent._id,
-        answers: formData.answers,
-        email: formData.email,
-        amount: selectedEvent.isPaid ? selectedEvent.price : 0,
-        isGuest: true
-      };
+  try {
+    const registrationData = {
+      eventId: selectedEvent._id,
+      answers: formData.answers,
+      email: formData.email,
+      amount: selectedEvent.isPaid ? selectedEvent.price : 0,
+      isGuest: true
+    };
 
-      const response = await fetch(`/api/registrations?eventId=${selectedEvent._id}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(registrationData),
-      });
+    const response = await fetch(`/api/registrations?eventId=${selectedEvent._id}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(registrationData),
+    });
 
-      const result = await response.json();
+    const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Registration failed');
-      }
-
-      if (selectedEvent.isPaid && result.checkoutUrl) {
-        // Show payment modal with Chapa checkout
-        setCheckoutUrl(result.checkoutUrl);
-        setShowRegistrationModal(false);
-        setShowPaymentModal(true);
-      } else {
-        // Free event - redirect to thank you
-        window.location.href = `/event/thank-you?status=completed&registrationId=${result.registrationId}`;
-      }
-    } catch (err: any) {
-      alert(err.message || 'Registration failed');
+    if (!response.ok) {
+      throw new Error(result.error || 'Registration failed');
     }
-  };
 
-  const handlePaymentComplete = () => {
-    setShowPaymentModal(false);
-    setSelectedEvent(null);
-    setCheckoutUrl('');
-  };
+    // For paid events, redirect to Chapa after showing success message
+    if (selectedEvent.isPaid && result.checkoutUrl) {
+      // Show success message for 2 seconds, then redirect
+      setTimeout(() => {
+        window.location.href = result.checkoutUrl;
+      }, 2000);
+      
+      // Return success to modal
+      return;
+    } else {
+      // For free events, redirect to thank you page
+      window.location.href = `/event/thank-you?status=completed&registrationId=${result.registrationId}`;
+    }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    throw new Error(err.message || 'Registration failed');
+  }
+};
+
 
   if (loading) {
     return (
@@ -180,19 +179,6 @@ export default function EventsPage() {
         />
       )}
 
-      {/* Payment Modal */}
-      {selectedEvent && checkoutUrl && (
-        <PaymentModal
-          isOpen={showPaymentModal}
-          onClose={() => {
-            setShowPaymentModal(false);
-            setCheckoutUrl('');
-          }}
-          checkoutUrl={checkoutUrl}
-          event={selectedEvent}
-          onPaymentComplete={handlePaymentComplete}
-        />
-      )}
     </>
   );
 }

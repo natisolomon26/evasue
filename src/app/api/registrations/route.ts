@@ -34,18 +34,61 @@ export async function POST(req: NextRequest) {
 
     // 4️⃣ Create registration
     const registration = await Registration.create({
-      eventId: new mongoose.Types.ObjectId(eventId),
-      answers: answersMap,
-      isGuest: isGuest ?? true,
-      paymentStatus: "pending",
-      registeredAt: new Date(),
-    });
+    eventId: new mongoose.Types.ObjectId(eventId),
+    answers: answersMap,
+    isGuest: isGuest ?? true,
+    paymentStatus: eventExists.isPaid ? "pending" : "completed", // 🔥 This line!
+    registeredAt: new Date(),
+});
 
     // 5️⃣ Generate unique transaction reference
     const txRef = `${registration._id.toString()}-${Date.now()}`;
 
     // 6️⃣ Initialize Chapa payment
-    const firstName = answers["Full Name"] || answers["full name"] || "Guest";
+    let firstName = "Guest";
+    let lastName = "";
+    let phoneNumber = "";
+
+    // Find name field - look for fields with "name" in the label
+    const nameFieldId = Object.keys(answers).find(key => {
+      // Get the field label from event formFields
+      const field = eventExists.formFields.find((f: { _id: { toString: () => string; }; }) => f._id.toString() === key);
+      return field?.label.toLowerCase().includes('name');
+    });
+
+    if (nameFieldId && answers[nameFieldId]) {
+      const fullName = answers[nameFieldId];
+      // Split full name into first and last name
+      const nameParts = fullName.trim().split(' ');
+      firstName = nameParts[0] || "Guest";
+      lastName = nameParts.slice(1).join(' ') || "";
+    }
+
+    // Find phone field
+    const phoneFieldId = Object.keys(answers).find(key => {
+      const field = eventExists.formFields.find((f: { _id: { toString: () => string; }; }) => f._id.toString() === key);
+      return field?.label.toLowerCase().includes('phone');
+    });
+
+    if (phoneFieldId && answers[phoneFieldId]) {
+      phoneNumber = answers[phoneFieldId];
+    }
+
+    // Prepare Chapa request data
+    const chapaData = {
+      amount: Number(amount),
+      currency: "ETB",
+      email,
+      tx_ref: txRef,
+      callback_url: `${BASE_URL}/api/registrations/payment-callback`,
+      first_name: firstName,
+      last_name: lastName,
+      phone_number: phoneNumber || undefined, // Only include if available
+      customizations: {
+        title: eventExists.title,
+        description: `Registration for ${eventExists.title}`
+      }
+    };
 
     const response = await fetch("https://api.chapa.co/v1/transaction/initialize", {
       method: "POST",
@@ -53,30 +96,23 @@ export async function POST(req: NextRequest) {
         Authorization: `Bearer ${CHAPA_SECRET_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        amount: Number(amount),
-        currency: "ETB",
-        email,
-        tx_ref: txRef,
-        callback_url: `${BASE_URL}/api/registrations/payment-callback`,
-        first_name: firstName,
-        last_name: "",
-      }),
+      body: JSON.stringify(chapaData),
     });
 
-    const chapaData = await response.json();
+    const chapaDataResponse = await response.json();
 
-    if (!chapaData.status || !chapaData.data?.checkout_url) {
+    // ✅ CRITICAL FIX: Return response to frontend
+    if (!chapaDataResponse.status || !chapaDataResponse.data?.checkout_url) {
       return NextResponse.json({
-        error: chapaData.message || "Failed to initialize payment",
-        chapaData,
+        error: chapaDataResponse.message || "Failed to initialize payment",
+        chapaData: chapaDataResponse,
       }, { status: 500 });
     }
 
     // ✅ Return registration info + checkout URL
     return NextResponse.json({
       registrationId: registration._id,
-      checkoutUrl: chapaData.data.checkout_url,
+      checkoutUrl: chapaDataResponse.data.checkout_url,
       txRef,
     });
 
