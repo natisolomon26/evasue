@@ -1,174 +1,262 @@
-"use client";
+// components/RegistrationModal.tsx
+'use client';
 
-import { useState } from "react";
-
-interface FormField {
-  label: string;
-  type: "text" | "number" | "textarea" | "select" | "checkbox";
-  required?: boolean;
-  options?: string[];
-}
-
-interface EventType {
-  _id: string;
-  title: string;
-  formFields: FormField[];
-  isPaid?: boolean;
-  price?: number;
-}
+import { useState, useEffect } from 'react';
+import { Event } from '@/types';
+import { X, Loader2 } from 'lucide-react';
 
 interface RegistrationModalProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  event: EventType;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onSuccess: (formData: any) => void; // Changed to accept form data
+  isOpen: boolean;
+  onClose: () => void;
+  event: Event;
+  onSubmit: (formData: any) => void;
 }
 
-export default function RegistrationModal({ open, setOpen, event, onSuccess }: RegistrationModalProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [answers, setAnswers] = useState<{ [key: string]: any }>({});
-  const [loading, setLoading] = useState(false);
+export default function RegistrationModal({ isOpen, onClose, event, onSubmit }: RegistrationModalProps) {
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [emailFieldId, setEmailFieldId] = useState<string>('');
 
-  if (!open) return null;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleChange = (label: string, value: any) => {
-    setAnswers(prev => ({ ...prev, [label]: value }));
-  };
-
-  const handleCheckboxChange = (label: string, checked: boolean) => {
-    setAnswers(prev => ({ ...prev, [label]: checked }));
-  };
-
-  const handleSubmit = async () => {
-    // Validate required fields
-    for (const field of event.formFields) {
-      if (field.required && !answers[field.label]) {
-        return alert(`Field "${field.label}" is required`);
-      }
+  // Initialize email field
+  useEffect(() => {
+    const emailField = event.formFields.find(f => 
+      f.label.toLowerCase().includes('email') || f.type === 'email'
+    );
+    if (emailField) {
+      setEmailFieldId(emailField._id);
     }
+  }, [event.formFields]);
 
-    setLoading(true);
+  // Reset form when modal opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      setAnswers({});
+      setErrors({});
+      setSubmitting(false);
+    }
+  }, [isOpen]);
+
+  const handleInputChange = (fieldId: string, value: string) => {
+    setAnswers(prev => ({ ...prev, [fieldId]: value }));
     
-    try {
-      // Instead of calling the API directly, pass the form data to parent
-      // The parent component will handle payment flow for paid events
-      // or direct registration for free events
-      
-      onSuccess(answers); // Pass form data to parent
-      
-      // Don't close modal here - parent will handle closing after payment
-      // setOpen(false);
-      // setAnswers({});
-      
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      alert(err.message);
-    } finally {
-      setLoading(false);
+    if (errors[fieldId]) {
+      setErrors(prev => ({ ...prev, [fieldId]: '' }));
     }
   };
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    
+    event.formFields.forEach(field => {
+      const value = answers[field._id]?.trim() || '';
+      
+      if (field.required && !value) {
+        newErrors[field._id] = `${field.label} is required`;
+      }
+      
+      if (field.type === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        newErrors[field._id] = 'Please enter a valid email address';
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    setSubmitting(true);
+    
+    // Prepare form data
+    const formData = {
+      answers: Object.fromEntries(
+        Object.entries(answers).map(([key, value]) => [key, value.trim()])
+      ),
+      email: answers[emailFieldId]?.trim() || ''
+    };
+
+    onSubmit(formData);
+  };
+
+  const renderField = (field: any) => {
+    const error = errors[field._id];
+    const value = answers[field._id] || '';
+    
+    const baseClasses = "w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition";
+    const errorClasses = error ? "border-red-500 bg-red-50" : "border-gray-300 hover:border-gray-400";
+
+    switch (field.type) {
+      case 'textarea':
+        return (
+          <textarea
+            value={value}
+            onChange={(e) => handleInputChange(field._id, e.target.value)}
+            className={`${baseClasses} ${errorClasses} min-h-[100px] resize-y`}
+            placeholder={`Enter your ${field.label.toLowerCase()}`}
+            disabled={submitting}
+          />
+        );
+      
+      case 'select':
+        return (
+          <select
+            value={value}
+            onChange={(e) => handleInputChange(field._id, e.target.value)}
+            className={`${baseClasses} ${errorClasses} ${!value ? 'text-gray-400' : ''}`}
+            disabled={submitting}
+          >
+            <option value="">Select {field.label}</option>
+            {field.options?.map((option: string, idx: number) => (
+              <option key={idx} value={option}>{option}</option>
+            ))}
+          </select>
+        );
+      
+      case 'checkbox':
+        return (
+          <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50">
+            <input
+              type="checkbox"
+              id={field._id}
+              checked={value === 'true'}
+              onChange={(e) => handleInputChange(field._id, e.target.checked.toString())}
+              className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+              disabled={submitting}
+            />
+            <label htmlFor={field._id} className="text-gray-700 cursor-pointer">
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </label>
+          </div>
+        );
+      
+      default:
+        const inputType = field.type === 'email' ? 'email' : field.type === 'number' ? 'number' : 'text';
+        return (
+          <input
+            type={inputType}
+            value={value}
+            onChange={(e) => handleInputChange(field._id, e.target.value)}
+            className={`${baseClasses} ${errorClasses}`}
+            placeholder={`Enter your ${field.label.toLowerCase()}`}
+            disabled={submitting}
+          />
+        );
+    }
+  };
+
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white w-full max-w-2xl rounded-lg p-6 max-h-[80vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-xl font-bold">{event.title} - Registration</h2>
-            {event.isPaid && event.price && (
-              <p className="text-sm text-purple-600 mt-1">
-                Paid Event - ETB {event.price} (Payment required after form submission)
-              </p>
-            )}
-          </div>
-          <button 
-            onClick={() => setOpen(false)}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            ✕
-          </button>
-        </div>
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        onClick={onClose}
+      />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {event.formFields.map((field, i) => (
-            <div key={i} className={`flex flex-col ${field.type === 'checkbox' ? 'flex-row items-center gap-2' : ''}`}>
-              {field.type === "checkbox" ? (
-                <>
-                  <input
-                    type="checkbox"
-                    checked={answers[field.label] || false}
-                    onChange={e => handleCheckboxChange(field.label, e.target.checked)}
-                    className="border p-2 rounded"
-                  />
-                  <label className="font-semibold">
-                    {field.label}{field.required && <span className="text-red-500">*</span>}
-                  </label>
-                </>
-              ) : (
-                <>
-                  <label className="font-semibold">
-                    {field.label}{field.required && <span className="text-red-500">*</span>}
-                  </label>
-                  
-                  {field.type === "text" || field.type === "number" ? (
-                    <input
-                      type={field.type}
-                      value={answers[field.label] || ""}
-                      onChange={e => handleChange(field.label, e.target.value)}
-                      className="border p-2 rounded mt-1"
-                    />
-                  ) : field.type === "textarea" ? (
-                    <textarea
-                      value={answers[field.label] || ""}
-                      onChange={e => handleChange(field.label, e.target.value)}
-                      className="border p-2 rounded mt-1"
-                      rows={3}
-                    />
-                  ) : field.type === "select" ? (
-                    <select
-                      value={answers[field.label] || ""}
-                      onChange={e => handleChange(field.label, e.target.value)}
-                      className="border p-2 rounded mt-1"
-                    >
-                      <option value="">Select...</option>
-                      {field.options?.map((opt, idx) => (
-                        <option key={idx} value={opt}>{opt}</option>
-                      ))}
-                    </select>
-                  ) : null}
-                </>
-              )}
+      {/* Modal */}
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          {/* Header */}
+          <div className="sticky top-0 bg-white border-b px-6 py-4 rounded-t-2xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Register for Event</h3>
+                <p className="text-sm text-gray-600 mt-1">{event.title}</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 transition p-1"
+                disabled={submitting}
+              >
+                <X size={24} />
+              </button>
             </div>
-          ))}
-        </div>
-
-        <div className="flex justify-end mt-6 gap-4">
-          <button 
-            onClick={() => setOpen(false)}
-            className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
-            disabled={loading}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-green-400"
-            disabled={loading}
-          >
-            {loading ? "Processing..." : event.isPaid ? "Continue to Payment" : "Submit Registration"}
-          </button>
-        </div>
-
-        {/* Payment Info Note */}
-        {event.isPaid && (
-          <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-            <p className="text-sm text-purple-700">
-              <strong>Note:</strong> After submitting this form, youll be redirected to complete your payment. 
-              Your registration will only be confirmed after successful payment.
-            </p>
           </div>
-        )}
+
+          {/* Content */}
+          <div className="p-6">
+            {/* Event Summary */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h4 className="font-semibold text-blue-900">Event Details</h4>
+                  <p className="text-sm text-blue-700">
+                    {new Date(event.date).toLocaleDateString()} • {event.location || 'Online'}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-blue-900">
+                    {event.isPaid ? `$${event.price}` : 'FREE'}
+                  </div>
+                  <div className="text-sm text-blue-700">
+                    {event.isPaid ? 'Payment required' : 'No payment required'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Registration Form */}
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-6">
+                {event.formFields.map((field) => (
+                  <div key={field._id}>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {field.label}
+                      {field.required && <span className="text-red-500 ml-1">*</span>}
+                    </label>
+                    
+                    {renderField(field)}
+                    
+                    {errors[field._id] && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                        <span className="mr-1">⚠</span>
+                        {errors[field._id]}
+                      </p>
+                    )}
+                  </div>
+                ))}
+
+                {/* Submit Button */}
+                <div className="pt-4">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className={`w-full py-3 px-4 rounded-lg font-medium text-lg transition-all flex items-center justify-center ${
+                      submitting
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : event.isPaid
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
+                          : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white'
+                    }`}
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : event.isPaid ? (
+                      `Proceed to Payment - $${event.price}`
+                    ) : (
+                      'Complete Registration'
+                    )}
+                  </button>
+                  
+                  <p className="text-xs text-gray-500 text-center mt-4">
+                    By registering, you agree to our Terms of Service and Privacy Policy
+                  </p>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   );

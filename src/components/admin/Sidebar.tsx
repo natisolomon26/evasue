@@ -5,20 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  LayoutDashboard, 
-  Calendar, 
-  FileText, 
-  Mail, 
-  Users, 
-  Settings, 
-  X, 
-  Menu,
-  ChevronRight,
-  LogOut,
-  User,
-  Bell,
-  Shield,
-  BarChart3
+  LayoutDashboard, Calendar, FileText, Mail, Users, Settings, X, Menu,
+  ChevronRight, LogOut, Bell, Shield, BarChart3
 } from "lucide-react";
 
 interface SidebarProps {
@@ -28,12 +16,6 @@ interface SidebarProps {
 }
 
 interface UserPermissions {
-  events?: { read: boolean; write: boolean };
-  newsletter?: { read: boolean; write: boolean };
-  emails?: { read: boolean; write: boolean };
-  materials?: { read: boolean; write: boolean };
-  users?: { read: boolean; write: boolean };
-  settings?: { read: boolean; write: boolean };
   [key: string]: { read: boolean; write: boolean } | undefined;
 }
 
@@ -47,62 +29,31 @@ interface User {
 }
 
 const navItems = [
-  { 
-    name: "Dashboard", 
-    href: "/admin", 
-    icon: LayoutDashboard, 
-    permissionKey: null,
-    badge: null 
-  },
-  { 
-    name: "Events", 
-    href: "/admin/events", 
-    icon: Calendar, 
-    permissionKey: "events",
-    badge: "5" 
-  },
-  { 
-    name: "Materials", 
-    href: "/admin/materials", 
-    icon: FileText, 
-    permissionKey: "materials",
-    badge: null 
-  },
-  { 
-    name: "Newsletter", 
-    href: "/admin/newsletter", 
-    icon: Mail, 
-    permissionKey: "newsletter",
-    badge: "12" 
-  },
-  { 
-    name: "Users", 
-    href: "/admin/users", 
-    icon: Users, 
-    permissionKey: "users",
-    badge: "3" 
-  },
-  { 
-    name: "Analytics", 
-    href: "/admin/analytics", 
-    icon: BarChart3, 
-    permissionKey: "analytics",
-    badge: null 
-  },
-  { 
-    name: "Settings", 
-    href: "/admin/settings", 
-    icon: Settings, 
-    permissionKey: "settings",
-    badge: null 
-  },
+  { name: "Dashboard", href: "/admin", icon: LayoutDashboard, permissionKey: null, badge: null },
+  { name: "Events", href: "/admin/events", icon: Calendar, permissionKey: "events", badge: "5" },
+  { name: "Materials", href: "/admin/materials", icon: FileText, permissionKey: "materials", badge: null },
+  { name: "Newsletter", href: "/admin/newsletter", icon: Mail, permissionKey: "newsletter", badge: "12" },
+  { name: "Users", href: "/admin/users", icon: Users, permissionKey: "users", badge: "3" },
+  { name: "Analytics", href: "/admin/analytics", icon: BarChart3, permissionKey: "analytics", badge: null },
+  { name: "Settings", href: "/admin/settings", icon: Settings, permissionKey: "settings", badge: null },
 ];
 
 export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const pathname = usePathname();
 
+  // Detect desktop size on client
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsDesktop(window.innerWidth >= 768);
+    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Fetch user info
   useEffect(() => {
     async function fetchUser() {
       try {
@@ -124,17 +75,14 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
     return user.permissions[item.permissionKey]?.read === true;
   });
 
-  const isActiveLink = (href: string) => {
-    if (href === "/admin") return pathname === "/admin";
-    return pathname.startsWith(href);
-  };
+  const isActiveLink = (href: string) => pathname.startsWith(href);
 
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
       window.location.href = "/login";
-    } catch (error) {
-      console.error("Logout failed:", error);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -148,7 +96,7 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile toggle */}
+      {/* Mobile menu toggle */}
       <button
         onClick={onToggle}
         className="md:hidden fixed top-4 left-4 z-50 p-3 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
@@ -166,13 +114,13 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <AnimatePresence>
-        {(isOpen || (typeof window !== 'undefined' && window.innerWidth >= 768)) && (
+        {(isOpen || isDesktop) && (
           <motion.aside
             initial={{ x: -320 }}
             animate={{ x: 0 }}
             exit={{ x: -320 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className={`fixed h-screen  bg-gradient-to-b from-white/90 to-white/50 shadow-2xl z-40 ${
+            className={`fixed h-screen bg-gradient-to-b from-white/90 to-white/50 shadow-2xl z-40 ${
               isCollapsed ? "w-20" : "w-80"
             } transition-all duration-300 flex flex-col`}
           >
@@ -183,11 +131,7 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
                   <Shield className="w-6 h-6 text-white" />
                 </div>
                 {!isCollapsed && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex-1 min-w-0"
-                  >
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 min-w-0">
                     <h2 className="text-xl font-bold text-sky-900 truncate">Admin Portal</h2>
                     <p className="text-sky-800 text-sm truncate">
                       {user ? getRoleLabel(user.role) : "Loading..."}
@@ -199,11 +143,7 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
 
             {/* User Profile */}
             {!isCollapsed && user && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="px-6 py-4 border-b border-slate-700/40"
-              >
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="px-6 py-4 border-b border-slate-700/40">
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-white/40 backdrop-blur-sm hover:bg-white/90 transition-colors">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm bg-gradient-to-br from-sky-500 to-sky-600">
                     {user.avatar ? (
@@ -223,25 +163,18 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
               </motion.div>
             )}
 
-            {/* Main Navigation */}
+            {/* Navigation */}
             <nav className="flex-1 px-4 py-3 overflow-y-auto">
-              <h3 className={`text-xs font-semibold text-sky-900 uppercase tracking-wider mb-3 px-2 ${
-                isCollapsed ? "text-center" : ""
-              }`}>
+              <h3 className={`text-xs font-semibold text-sky-900 uppercase tracking-wider mb-3 px-2 ${isCollapsed ? "text-center" : ""}`}>
                 {isCollapsed ? "Nav" : "Main Menu"}
               </h3>
               
               {allowedNavItems.map((item, idx) => {
                 const Icon = item.icon;
                 const isActive = isActiveLink(item.href);
-                
+
                 return (
-                  <motion.div
-                    key={item.href}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.03 }}
-                  >
+                  <motion.div key={item.href} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.03 }}>
                     <Link
                       href={item.href}
                       onClick={() => window.innerWidth < 768 && onClose()}
@@ -251,10 +184,8 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
                           : "text-slate-500 hover:bg-sky-700 hover:text-white"
                       } ${isCollapsed ? "justify-center" : ""}`}
                     >
-                      <Icon className={`w-5 h-5 ${
-                        isActive ? "text-blue-400" : "text-slate-400 group-hover:text-blue-400"
-                      }`} />
-                      
+                      <Icon className={`w-5 h-5 ${isActive ? "text-blue-400" : "text-slate-400 group-hover:text-blue-400"}`} />
+
                       {!isCollapsed && (
                         <>
                           <span className="font-medium">{item.name}</span>
@@ -278,7 +209,7 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
               })}
             </nav>
 
-            {/* Footer Actions */}
+            {/* Footer */}
             <div className="p-4 border-t border-slate-700/40">
               <button
                 onClick={handleLogout}
@@ -292,10 +223,7 @@ export default function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
             </div>
 
             {/* Mobile close button */}
-            <button
-              onClick={onClose}
-              className="md:hidden absolute top-4 right-4 p-2 rounded-xl bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
-            >
+            <button onClick={onClose} className="md:hidden absolute top-4 right-4 p-2 rounded-xl bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors">
               <X className="w-5 h-5" />
             </button>
           </motion.aside>

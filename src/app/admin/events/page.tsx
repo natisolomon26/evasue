@@ -1,69 +1,88 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import EventsTable from "@/components/admin/events/EventsTable";
+import { useEffect, useState } from "react";
+import EventsTable, { Event } from "@/components/admin/events/EventsTable";
+import Loader from "@/components/Loader";
 import CreateEventModal from "@/components/admin/events/CreateEventModal";
-import { EventType } from "@/types/events";
 
-export default function EventsPage() {
-  const [events, setEvents] = useState<EventType[]>([]);
-  const [openCreate, setOpenCreate] = useState(false);
-  const [loading, setLoading] = useState(false);
+export default function AdminEventsPage() {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const fetchEvents = async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/events");
       const data = await res.json();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setEvents(data.events.map((e: any) => ({
-        id: e._id,
-        name: e.title,
-        description: e.description,
-        date: new Date(e.eventDate).toLocaleDateString(),
-        status: "Open",
-      })));
+
+      // Ensure events is always an array
+      setEvents(Array.isArray(data) ? data : data.events || []);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to fetch events", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
-  (async () => {
-    await fetchEvents();
-  })();
-}, []);
+    fetchEvents();
+  }, []);
+
+  const handleEdit = (event: Event) => {
+    alert(`Edit event: ${event.title}`);
+    // You can open an edit modal here
+  };
+
+  const handleView = (event: Event) => {
+    alert(`View event: ${event.title}`);
+    // You can open a view modal or redirect
+  };
+
+  const handleDelete = async (event: Event) => {
+    if (!confirm(`Are you sure you want to delete "${event.title}"?`)) return;
+    try {
+      const res = await fetch(`/api/events/${event._id}`, { method: "DELETE" });
+      if (res.ok) {
+        fetchEvents();
+      } else {
+        const error = await res.json();
+        alert(error.error || "Failed to delete event");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete event");
+    }
+  };
+
+  if (loading) return <Loader />;
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Events</h1>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Admin Events</h1>
+        <button
+          onClick={() => setCreateModalOpen(true)}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        >
+          + Create Event
+        </button>
       </div>
 
-      
-
-      {/* Events Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
-      >
-        <EventsTable
-          events={events}
-          refreshEvents={fetchEvents}
-          onCreateClick={() => setOpenCreate(true)}
-          loading={loading}
-        />
-      </motion.div>
-
-      {/* Create Event Modal */}
-      <CreateEventModal
-        open={openCreate}
-        setOpen={setOpenCreate}
-        refreshEvents={fetchEvents}
+      <EventsTable
+        events={events}
+        onEdit={handleEdit}
+        onView={handleView}
+        onDelete={handleDelete}
       />
+
+      {createModalOpen && (
+        <CreateEventModal
+          open={createModalOpen}
+          setOpen={setCreateModalOpen}
+          refreshEvents={fetchEvents}
+        />
+      )}
     </div>
   );
 }

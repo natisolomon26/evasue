@@ -1,27 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
 import Event from "@/models/Event";
+import mongoose from "mongoose";
 import { connectDB } from "@/lib/db";
 
+// Normalize AND preserve _id for formFields
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const normalizeFormFields = (formFields: any) => {
-  if (!Array.isArray(formFields) && typeof formFields === "string") {
-    formFields = JSON.parse(formFields);
+const normalizeFormFields = (incomingFields: any, existingFields: any[] = []) => {
+  if (!incomingFields) return [];
+
+  if (typeof incomingFields === "string") {
+    incomingFields = JSON.parse(incomingFields);
   }
-  if (!Array.isArray(formFields)) return [];
+
+  if (!Array.isArray(incomingFields)) return [];
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return formFields.map((f: any) => ({
-    label: f.label ?? "",
-    type: f.type ?? "text",
-    required: f.required ?? false,
-    options: Array.isArray(f.options) ? f.options : []
-  }));
+  return incomingFields.map((field: any) => {
+    // Try to preserve existing _id
+    const found = existingFields.find((f) => f._id?.toString() === field._id);
+
+    return {
+      _id: found?._id || new mongoose.Types.ObjectId(),
+      label: field.label ?? "",
+      type: field.type ?? "text",
+      required: field.required ?? false,
+      options: Array.isArray(field.options) ? field.options : []
+    };
+  });
 };
 
-// Helper to get id from request
+// Extract event ID from URL
 const getId = async (req: NextRequest) => {
   const url = new URL(req.url);
   const parts = url.pathname.split("/");
-  return parts[parts.length - 1]; // last segment is the ID
+  return parts[parts.length - 1];
 };
 
 // --------------------------
@@ -31,8 +43,12 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
     const id = await getId(req);
+
     const event = await Event.findById(id);
-    if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    if (!event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
     return NextResponse.json(event, { status: 200 });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
@@ -42,25 +58,39 @@ export async function GET(req: NextRequest) {
 }
 
 // --------------------------
-// PUT update event
+// PUT update event (fixed & safe)
 // --------------------------
 export async function PUT(req: NextRequest) {
   try {
     await connectDB();
-    const body = await req.json();
     const id = await getId(req);
+    const body = await req.json();
 
-    const updatedEvent = await Event.findByIdAndUpdate(
-      id,
-      {
-        ...body,
-        formFields: body.formFields ? normalizeFormFields(body.formFields) : undefined
-      },
-      { new: true }
+    const existingEvent = await Event.findById(id);
+    if (!existingEvent) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
+    // Preserve old fields + generate new ones
+    const updatedFields = normalizeFormFields(
+      body.formFields,
+      existingEvent.formFields
     );
 
-    if (!updatedEvent) return NextResponse.json({ error: "Event not found" }, { status: 404 });
-    return NextResponse.json(updatedEvent, { status: 200 });
+    existingEvent.title = body.title ?? existingEvent.title;
+    existingEvent.description = body.description ?? existingEvent.description;
+    existingEvent.date = body.date ?? existingEvent.date;
+    existingEvent.location = body.location ?? existingEvent.location;
+    existingEvent.isPaid = body.isPaid ?? existingEvent.isPaid;
+    existingEvent.price = body.price ?? existingEvent.price;
+
+    if (body.formFields) {
+      existingEvent.formFields = updatedFields;
+    }
+
+    const saved = await existingEvent.save();
+
+    return NextResponse.json(saved, { status: 200 });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     console.error("Update Event Error:", err);
@@ -77,7 +107,10 @@ export async function DELETE(req: NextRequest) {
     const id = await getId(req);
 
     const deleted = await Event.findByIdAndDelete(id);
-    if (!deleted) return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    if (!deleted) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
     return NextResponse.json({ message: "Event deleted" }, { status: 200 });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {

@@ -1,322 +1,206 @@
-// components/events/PaymentModal.tsx - UPDATED
-"use client";
+// components/PaymentModal.tsx
+'use client';
 
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { 
-  DollarSign, 
-  CreditCard, 
-  Smartphone, 
-  Building, 
-  CheckCircle2,
-  X,
-  Loader2
-} from "lucide-react";
-import SuccessModal from "./SuccessModal";
-
-interface PaymentData {
-  eventId: string;
-  eventTitle: string;
-  amount: number;
-  userData: {
-    name: string;
-    email: string;
-    phone: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [key: string]: any;
-  };
-}
-
-interface EventType {
-  _id: string;
-  title: string;
-  price?: number;
-  date: string;
-  location: string;
-}
+import { useEffect, useState } from 'react';
+import { Event } from '@/types';
+import { X, Loader2, ExternalLink, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface PaymentModalProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  paymentData: PaymentData;
-  event: EventType;
-  onSuccess: () => void;
-  onCancel: () => void;
+  isOpen: boolean;
+  onClose: () => void;
+  checkoutUrl: string;
+  event: Event;
+  onPaymentComplete: () => void;
 }
 
-type PaymentMethod = 'telebirr' | 'cbe' | 'mobile' | 'bank' | '';
+export default function PaymentModal({ isOpen, onClose, checkoutUrl, event, onPaymentComplete }: PaymentModalProps) {
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'completed' | 'failed'>('pending');
+  const [countdown, setCountdown] = useState(5);
 
-export default function PaymentModal({ 
-  open, 
-  setOpen, 
-  paymentData, 
-  event, 
-  onSuccess, 
-  onCancel 
-}: PaymentModalProps) {
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('');
-  const [processing, setProcessing] = useState(false);
-  const [step, setStep] = useState<'select' | 'processing' | 'success'>('select');
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [transactionId, setTransactionId] = useState('');
+  // Handle countdown and auto-redirect
+  useEffect(() => {
+    if (isOpen && checkoutUrl && paymentStatus === 'pending') {
+      const timer = setTimeout(() => {
+        // Redirect to Chapa checkout
+        window.open(checkoutUrl, '_blank');
+        setPaymentStatus('processing');
+      }, 2000); // 2 second delay for user to see instructions
 
-  const paymentMethods = [
-    {
-      id: 'telebirr',
-      name: 'Telebirr',
-      icon: Smartphone,
-      description: 'Pay with Telebirr mobile money',
-      color: 'bg-green-500'
-    },
-    {
-      id: 'cbe',
-      name: 'CBE Birr',
-      icon: CreditCard,
-      description: 'Pay with CBE Birr',
-      color: 'bg-blue-500'
-    },
-    {
-      id: 'mobile',
-      name: 'Mobile Banking',
-      icon: Smartphone,
-      description: 'Pay with other mobile banking',
-      color: 'bg-purple-500'
-    },
-    {
-      id: 'bank',
-      name: 'Bank Transfer',
-      icon: Building,
-      description: 'Pay via bank transfer',
-      color: 'bg-gray-500'
+      return () => clearTimeout(timer);
     }
-  ];
+  }, [isOpen, checkoutUrl, paymentStatus]);
 
-  const handlePayment = async () => {
-    if (!selectedMethod) return;
-
-    setProcessing(true);
-    setStep('processing');
-
-    try {
-      // Simulate API call to payment gateway
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Generate mock transaction ID
-      const mockTransactionId = 'txn_' + Math.random().toString(36).substr(2, 9);
-      setTransactionId(mockTransactionId);
-      
-      setStep('success');
-      
-      // Show success modal after a brief delay
-      setTimeout(() => {
-        setOpen(false);
-        setShowSuccessModal(true);
-        onSuccess();
-      }, 1500);
-      
-    } catch (error) {
-      console.error('Payment failed:', error);
-      alert('Payment failed. Please try again.');
-      setStep('select');
-      setProcessing(false);
+  // Countdown for auto-redirect
+  useEffect(() => {
+    if (paymentStatus === 'pending' && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
     }
+  }, [paymentStatus, countdown]);
+
+  const handleManualRedirect = () => {
+    window.open(checkoutUrl, '_blank');
+    setPaymentStatus('processing');
   };
 
-  const handleDownloadReceipt = async () => {
-    try {
-      // Download receipt PDF
-      const response = await fetch(`/api/events/${event._id}/receipt`);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `receipt-${event.title}-${transactionId}.pdf`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Failed to download receipt:', error);
-      alert('Failed to download receipt. Please try again.');
-    }
+  const handlePaymentComplete = () => {
+    setPaymentStatus('completed');
+    setTimeout(() => {
+      onPaymentComplete();
+      onClose();
+    }, 2000);
   };
 
-  const handleViewEvent = () => {
-    window.location.href = `/events/${event._id}`;
-  };
-
-  const handleCancel = () => {
-    setOpen(false);
-    onCancel();
-  };
-
-  if (!open) return null;
+  if (!isOpen) return null;
 
   return (
-    <>
-      {/* Payment Modal */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.9 }}
-          className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
-        >
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      {/* Backdrop */}
+      <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" />
+
+      {/* Modal */}
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md">
           {/* Header */}
-          <div className="p-6 border-b border-gray-200">
+          <div className="sticky top-0 bg-white border-b px-6 py-4 rounded-t-2xl">
             <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Complete Your Registration</h2>
-                <p className="text-gray-600 text-sm mt-1">
-                  {event.title}
-                </p>
-              </div>
+              <h3 className="text-xl font-bold text-gray-900">Complete Payment</h3>
               <button
-                onClick={handleCancel}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                disabled={processing}
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 transition p-1"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X size={24} />
               </button>
             </div>
           </div>
 
+          {/* Content */}
           <div className="p-6">
-            {/* Amount Display */}
-            <div className="bg-blue-50 rounded-xl p-4 mb-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Amount</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    ETB {paymentData.amount}
+            {paymentStatus === 'pending' && (
+              <div className="text-center">
+                <div className="mb-6">
+                  <div className="text-6xl mb-4">💰</div>
+                  <h4 className="text-xl font-bold text-gray-800 mb-2">
+                    Redirecting to Secure Payment
+                  </h4>
+                  <p className="text-gray-600 mb-4">
+                    You'll be redirected to Chapa's secure payment page in {countdown} seconds
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </div>
 
-            {/* Payment Method Selection */}
-            {step === 'select' && (
-              <>
-                <div className="mb-6">
-                  <h3 className="font-semibold text-gray-900 mb-4">Select Payment Method</h3>
-                  <div className="space-y-3">
-                    {paymentMethods.map((method) => {
-                      const Icon = method.icon;
-                      return (
-                        <button
-                          key={method.id}
-                          onClick={() => setSelectedMethod(method.id as PaymentMethod)}
-                          className={`w-full p-4 rounded-xl border-2 transition-all duration-200 ${
-                            selectedMethod === method.id
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className={`w-12 h-12 ${method.color} rounded-lg flex items-center justify-center`}>
-                              <Icon className="w-6 h-6 text-white" />
-                            </div>
-                            <div className="flex-1 text-left">
-                              <p className="font-semibold text-gray-900">{method.name}</p>
-                              <p className="text-sm text-gray-600">{method.description}</p>
-                            </div>
-                            <div className={`w-5 h-5 rounded-full border-2 ${
-                              selectedMethod === method.id
-                                ? 'bg-blue-500 border-blue-500'
-                                : 'border-gray-300'
-                            }`} />
-                          </div>
-                        </button>
-                      );
-                    })}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <h5 className="font-semibold text-blue-900 mb-2">Payment Summary</h5>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Event:</span>
+                      <span className="font-medium">{event.title}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Amount:</span>
+                      <span className="font-bold text-lg text-blue-900">${event.price}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Currency:</span>
+                      <span className="font-medium">ETB</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Pay Button */}
                 <button
-                  onClick={handlePayment}
-                  disabled={!selectedMethod || processing}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-4 rounded-xl font-semibold transition-colors duration-200 flex items-center justify-center gap-2"
+                  onClick={handleManualRedirect}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition font-medium flex items-center justify-center"
                 >
-                  {processing ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    `Pay ETB ${paymentData.amount}`
-                  )}
+                  <ExternalLink className="h-5 w-5 mr-2" />
+                  Open Payment Page Now
                 </button>
-              </>
-            )}
 
-            {/* Processing State */}
-            {step === 'processing' && (
-              <div className="text-center py-8">
-                <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-                <h3 className="font-semibold text-gray-900 mb-2">Processing Payment</h3>
-                <p className="text-gray-600">Please wait while we process your payment...</p>
-              </div>
-            )}
-
-            {/* Success State */}
-            {step === 'success' && (
-              <div className="text-center py-8">
-                <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-4" />
-                <h3 className="font-semibold text-gray-900 mb-2">Payment Successful!</h3>
-                <p className="text-gray-600">
-                  Your registration for <strong>{event.title}</strong> is now complete.
+                <p className="text-xs text-gray-500 mt-4">
+                  Chapa is a secure payment processor. Your payment information is encrypted and safe.
                 </p>
               </div>
             )}
 
-            {/* User Info Summary */}
-            <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-              <h4 className="font-medium text-gray-900 mb-2">Registration Details</h4>
-              <div className="space-y-1 text-sm text-gray-600">
-               
-                {/* Show additional form fields */}
-                {Object.entries(paymentData.userData)
-                  .filter(([key]) => !['name', 'email', 'phone'].includes(key.toLowerCase()))
-                  .map(([key, value]) => (
-                    <p key={key}>
-                      <strong>{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:</strong> {String(value)}
-                    </p>
-                  ))
-                }
+            {paymentStatus === 'processing' && (
+              <div className="text-center py-8">
+                <div className="mb-6">
+                  <Loader2 className="h-16 w-16 text-blue-500 animate-spin mx-auto mb-4" />
+                  <h4 className="text-xl font-bold text-gray-800 mb-2">
+                    Payment Processing
+                  </h4>
+                  <p className="text-gray-600">
+                    Please complete the payment on the Chapa page that opened.
+                    <br />
+                    Do not close this window.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <button
+                    onClick={() => window.open(checkoutUrl, '_blank')}
+                    className="w-full border border-blue-600 text-blue-600 py-2 px-4 rounded-lg hover:bg-blue-50 transition flex items-center justify-center"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Reopen Payment Page
+                  </button>
+
+                  <button
+                    onClick={handlePaymentComplete}
+                    className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition"
+                  >
+                    I've Completed the Payment
+                  </button>
+                </div>
               </div>
-            </div>
-
-            {/* Cancel Button */}
-            {step === 'select' && (
-              <button
-                onClick={handleCancel}
-                className="w-full mt-4 py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors"
-              >
-                Cancel Payment
-              </button>
             )}
-          </div>
-        </motion.div>
-      </div>
 
-      {/* Success Modal */}
-      <SuccessModal
-        isOpen={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
-        event={{
-          _id: event._id,
-          title: event.title,
-          date: event.date,
-          location: event.location,
-          price: paymentData.amount
-        }}
-        userData={paymentData.userData}
-        transactionId={transactionId}
-        onDownloadReceipt={handleDownloadReceipt}
-        onViewEvent={handleViewEvent}
-      />
-    </>
+            {paymentStatus === 'completed' && (
+              <div className="text-center py-8">
+                <div className="mb-6">
+                  <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                  <h4 className="text-xl font-bold text-gray-800 mb-2">
+                    Payment Successful!
+                  </h4>
+                  <p className="text-gray-600">
+                    Thank you for your payment. You will be redirected shortly.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {paymentStatus === 'failed' && (
+              <div className="text-center py-8">
+                <div className="mb-6">
+                  <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+                  <h4 className="text-xl font-bold text-gray-800 mb-2">
+                    Payment Failed
+                  </h4>
+                  <p className="text-gray-600 mb-4">
+                    There was an issue with your payment. Please try again.
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleManualRedirect}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition font-medium"
+                >
+                  Try Payment Again
+                </button>
+              </div>
+            )}
+
+            {/* Instructions */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <h5 className="font-semibold text-gray-700 mb-2">Payment Instructions:</h5>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• You will be redirected to Chapa's secure payment page</li>
+                <li>• Complete your payment using your preferred method</li>
+                <li>• Return to this window after payment completion</li>
+                <li>• Click "I've Completed the Payment" to proceed</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

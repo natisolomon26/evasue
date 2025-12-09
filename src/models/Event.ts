@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-export interface IFormField {
+export interface IFormField extends Document {
+  _id: mongoose.Types.ObjectId;       // form field unique ID
   label: string;
   type: "text" | "email" | "number" | "textarea" | "select" | "checkbox";
   required: boolean;
@@ -9,24 +10,33 @@ export interface IFormField {
 
 export interface IEvent extends Document {
   title: string;
-  description: string;
+  description?: string;
   date: Date;
-  location: string;
+  location?: string;
   isPaid: boolean;
   price: number;
   formFields: IFormField[];
 }
 
-const FormFieldSchema = new Schema<IFormField>({
-  label: { type: String, required: true },
-  type: {
-    type: String,
-    enum: ["text", "email", "number", "textarea", "select", "checkbox"],
-    required: true
+const FormFieldSchema = new Schema<IFormField>(
+  {
+    label: { type: String, required: true },
+    type: {
+      type: String,
+      enum: ["text", "email", "number", "textarea", "select", "checkbox"],
+      required: true,
+    },
+    required: { type: Boolean, default: false },
+    options: {
+      type: [String],
+      default: [],
+      required: function () {
+        return this.type === "select";   // only required for select fields
+      },
+    },
   },
-  required: { type: Boolean, default: false },
-  options: { type: [String], default: [] }
-});
+  { _id: true } // important: guarantee stable field ids
+);
 
 const EventSchema = new Schema<IEvent>(
   {
@@ -36,7 +46,7 @@ const EventSchema = new Schema<IEvent>(
     location: String,
     isPaid: { type: Boolean, default: false },
     price: { type: Number, default: 0 },
-    formFields: { type: [FormFieldSchema], default: [] }
+    formFields: { type: [FormFieldSchema], default: [] },
   },
   { timestamps: true }
 );

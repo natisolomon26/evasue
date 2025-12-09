@@ -16,6 +16,8 @@ export interface EventType {
 }
 
 interface FormField {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _id: any;
   label: string;
   type: "text" | "number" | "textarea" | "select" | "checkbox";
   required?: boolean;

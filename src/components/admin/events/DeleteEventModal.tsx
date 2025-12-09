@@ -1,55 +1,43 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { EventType } from "@/types/events";
 
 interface DeleteEventModalProps {
   data: EventType | null;
-  setData: (value: EventType | null) => void;
+  setData: (data: EventType | null) => void;
   refreshEvents: () => void;
 }
 
 export default function DeleteEventModal({ data, setData, refreshEvents }: DeleteEventModalProps) {
   if (!data) return null;
 
-  const handleDelete = async () => {
+  const deleteEvent = async () => {
     try {
-      const res = await fetch(`/api/events/${data.id}`, { method: "DELETE" });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || "Failed to delete");
-
-      setData(null);
+      const res = await fetch(`/api/events/${data._id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete event");
       refreshEvents();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      alert(err.message);
+      setData(null);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete event");
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="bg-white p-6 rounded-xl w-[350px]"
-      >
-        <h2 className="text-xl font-bold mb-3">Delete Event</h2>
-        <p className="text-gray-600">
-          Are you sure you want to delete <b>{data.title}</b>?
-        </p>
-
-        <div className="flex justify-end mt-5 gap-3">
-          <button className="px-4 py-2" onClick={() => setData(null)} disabled={false}>
-            Cancel
-          </button>
-          <button
-            className="bg-red-600 text-white px-4 py-2 rounded-lg"
-            onClick={handleDelete}
-          >
-            Delete
-          </button>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100]">
+      <div className="bg-white w-full max-w-md rounded-xl shadow-xl flex flex-col">
+        <div className="p-6 border-b flex justify-between items-center">
+          <h2 className="text-2xl font-bold">Delete Event</h2>
+          <button className="text-gray-600 hover:text-black text-xl" onClick={() => setData(null)}>✕</button>
         </div>
-      </motion.div>
+        <div className="p-6 text-center">
+          <p className="text-gray-700 mb-4">Are you sure you want to delete <strong>{data.title}</strong>?</p>
+          <div className="flex justify-center gap-4">
+            <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" onClick={() => setData(null)}>Cancel</button>
+            <button className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700" onClick={deleteEvent}>Delete</button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
