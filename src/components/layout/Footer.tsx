@@ -1,160 +1,399 @@
 'use client';
 
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { 
+  Mail, Phone, MapPin, Facebook, Youtube, Instagram, 
+  Twitter, Linkedin, Heart, ArrowUpRight, Cross, Globe, 
+  Users, Shield, Sparkles, Send, ChevronRight
+} from 'lucide-react';
 
 export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
+  const [email, setEmail] = useState('');
+  const [subscribed, setSubscribed] = useState(false);
+  const [hoveredLink, setHoveredLink] = useState<string | null>(null);
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email) {
+      setSubscribed(true);
+      setEmail('');
+      setTimeout(() => setSubscribed(false), 3000);
+    }
+  };
+
+  const socialLinks = [
+    { icon: Facebook, label: 'Facebook', href: '#', color: 'text-blue-500 hover:text-blue-500' },
+    { icon: Instagram, label: 'Instagram', href: '#', color: 'text-pink-500 hover:text-pink-500' },
+    { icon: Twitter, label: 'Twitter', href: '#', color: 'text-sky-500 hover:text-sky-500' },
+    { icon: Youtube, label: 'YouTube', href: '#', color: 'text-red-500 hover:text-red-600' },
+    { icon: Linkedin, label: 'LinkedIn', href: '#', color: 'text-blue-600 hover:text-blue-600' },
+  ];
 
   return (
     <motion.footer 
-      className="bg-slate-900 text-gray-200 border-t border-slate-800"
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      className="relative bg-gradient-to-b from-sky-950 via-sky-900 to-sky-950 text-gray-200 overflow-hidden"
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.7, ease: "easeOut" }}
+      transition={{ duration: 0.8 }}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Top Row: Logo + Socials + Quick Links */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-          
-          {/* Logo & Tagline */}
-          <div className="flex flex-col items-start md:items-center lg:items-start">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-sky-600 to-sky-700 rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-sm">E</span>
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-sky-600 to-sky-500 bg-clip-text text-transparent">
-                EvaSUE Ethiopia
-              </span>
-            </div>
-            <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
-              Following Christ together on Ethiopian campuses — transforming students, impacting nations.
-            </p>
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <h4 className="font-semibold text-white mb-4 text-lg">Quick Links</h4>
-            <ul className="space-y-2">
-              {[
-                { label: "About Us", href: "/about" },
-                { label: "Campuses", href: "/campuses" },
-                { label: "Events", href: "/events" },
-                { label: "Resources", href: "/resources" },
-              ].map((item) => (
-                <motion.li
-                  key={item.href}
-                  whileHover={{ x: 4, color: "#60A5FA" }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Link 
-                    href={item.href} 
-                    className="text-slate-400 hover:text-sky-400 transition-colors duration-200 text-sm"
-                  >
-                    {item.label}
-                  </Link>
-                </motion.li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Get Involved */}
-          <div>
-            <h4 className="font-semibold text-white mb-4 text-lg">Get Involved</h4>
-            <ul className="space-y-2">
-              {[
-                { label: "Join Us", href: "/join" },
-                { label: "Volunteer", href: "/volunteer" },
-                { label: "Donate", href: "/donate" },
-                { label: "Pray for Us", href: "/pray" },
-              ].map((item) => (
-                <motion.li
-                  key={item.href}
-                  whileHover={{ x: 4, color: "#FBBF24" }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Link 
-                    href={item.href} 
-                    className="text-slate-400 hover:text-amber-400 transition-colors duration-200 text-sm"
-                  >
-                    {item.label}
-                  </Link>
-                </motion.li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h4 className="font-semibold text-white mb-4 text-lg">Contact</h4>
-            <div className="space-y-3 text-sm text-slate-400">
-              <div className="flex items-start gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mt-0.5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span>Addis Ababa, Ethiopia</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                <span>info@evasue.net</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                <span>+251 XXX XXX XXX</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Bar: Copyright + Social Icons */}
-        <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-6">
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-slate-500 text-sm"
-          >
-            &copy; {currentYear} EvaSUE in Ethiopia Christian Student Fellowship. All rights reserved.
-          </motion.p>
-
-          <div className="flex gap-4">
-            {[ 'Telegram', 'Instagram', 'YouTube'].map((social) => (
-              <motion.a
-                key={social}
-                href="#"
-                whileHover={{ scale: 1.2, rotate: 5 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 300 }}
-                className="text-slate-500 hover:text-sky-400 transition-colors duration-200"
-                aria-label={social}
-              >
-                <span className="text-xs font-bold uppercase tracking-wider">{social[0]}</span>
-              </motion.a>
-            ))}
-          </div>
-        </div>
-
-        {/* Floating decorative element */}
+      {/* Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Gradient orbs */}
         <motion.div 
-          className="absolute -bottom-4 -left-4 w-20 h-20 bg-sky-500/5 rounded-full blur-2xl hidden md:block"
+          className="absolute -top-20 -left-20 w-80 h-80 bg-gradient-to-br from-yellow-500/50 via-transparent to-transparent rounded-full blur-3xl"
           animate={{
-            y: [-10, 10, -10],
-            scale: [1, 1.05, 1]
+            y: [0, 40, 0],
+            x: [0, 20, 0],
+            rotate: [0, 180, 360]
           }}
           transition={{
-            duration: 6,
+            duration: 20,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: "linear"
           }}
         />
+        <motion.div 
+          className="absolute -bottom-20 -right-20 w-96 h-96 bg-gradient-to-tr from-emerald-500/10 via-transparent to-transparent rounded-full blur-3xl"
+          animate={{
+            y: [0, -40, 0],
+            x: [0, -20, 0],
+            rotate: [360, 180, 0]
+          }}
+          transition={{
+            duration: 25,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+
+        {/* Grid pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_95%,rgba(255,255,255,0.1)_100%)] bg-[size:60px]" />
+          <div className="absolute inset-0 bg-[linear-gradient(0deg,transparent_95%,rgba(255,255,255,0.1)_100%)] bg-[size:60px]" />
+        </div>
+
+        {/* Floating crosses */}
+        {[1, 2, 3, 4, 5].map((i) => (
+          <motion.div
+            key={i}
+            className="absolute text-white/10"
+            style={{
+              left: `${5 + i * 18}%`,
+              top: `${20 + i * 10}%`,
+            }}
+            animate={{
+              y: [0, -30, 0],
+              rotate: [0, 360],
+              scale: [1, 1.3, 1],
+            }}
+            transition={{
+              duration: 8 + i * 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            <Cross className="w-8 h-8" />
+          </motion.div>
+        ))}
       </div>
+
+      {/* Main Content */}
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
+        {/* Top Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
+          {/* Brand Column */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center gap-4">
+              <motion.div
+                whileHover={{ scale: 1.1, rotate: 360 }}
+                transition={{ duration: 0.4 }}
+                className="relative"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-orange60 rounded-full blur-lg opacity-50" />
+                <div className="relative w-14 h-14 bg-gradient-to-br from-white to-white/60 rounded-2xl flex items-center justify-center shadow-xl">
+                  <Cross className="w-7 h-7 text-sky-900" />
+                </div>
+              </motion.div>
+              <div>
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
+                  EvaSUE Ethiopia
+                </h3>
+                <p className="text-sm text-slate-400 mt-1">Christian Student Fellowship</p>
+              </div>
+            </div>
+            
+            <p className="text-slate-400 leading-relaxed">
+              Following Christ together on Ethiopian campuses — transforming students, 
+              impacting nations for eternity.
+            </p>
+
+            {/* Social Links */}
+            <div className="flex gap-4">
+              {socialLinks.map((social, index) => {
+                const Icon = social.icon;
+                return (
+                  <motion.a
+                    key={social.label}
+                    href={social.href}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 + index * 0.1 }}
+                    whileHover={{ scale: 1.2, y: -3 }}
+                    whileTap={{ scale: 0.9 }}
+                    className={`w-10 h-10 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center ${social.color} transition-all duration-300 hover:bg-white/10 hover:border-white/20`}
+                    aria-label={social.label}
+                  >
+                    <Icon className="w-5 h-5" />
+                  </motion.a>
+                );
+              })}
+            </div>
+          </motion.div>
+
+          {/* Quick Links Column */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="space-y-6"
+          >
+            <h4 className="text-lg font-bold text-white flex items-center gap-2">
+              <ChevronRight className="w-5 h-5 text-sky-400" />
+              Quick Links
+            </h4>
+            <ul className="space-y-3">
+              {[
+                { label: "About Us", href: "/about", icon: Users },
+                { label: "Our Beliefs", href: "/beliefs", icon: Shield },
+                { label: "Campuses", href: "/campuses", icon: Globe },
+                { label: "Resources", href: "/resources", icon: Sparkles },
+                { label: "Events", href: "/events", icon: Heart },
+              ].map((link) => {
+                const Icon = link.icon;
+                return (
+                  <motion.li
+                    key={link.href}
+                    onMouseEnter={() => setHoveredLink(link.label)}
+                    onMouseLeave={() => setHoveredLink(null)}
+                    whileHover={{ x: 5 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Link 
+                      href={link.href} 
+                      className="flex items-center gap-3 text-slate-400 hover:text-sky-400 transition-colors duration-300 group"
+                    >
+                      <motion.div
+                        animate={{ 
+                          rotate: hoveredLink === link.label ? 360 : 0,
+                          scale: hoveredLink === link.label ? 1.2 : 1,
+                        }}
+                        transition={{ duration: 0.3 }}
+                        className="w-5 h-5"
+                      >
+                        <Icon className="w-4 h-4" />
+                      </motion.div>
+                      <span className="flex-1">{link.label}</span>
+                      <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </Link>
+                  </motion.li>
+                );
+              })}
+            </ul>
+          </motion.div>
+
+          {/* Get Involved Column */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+            className="space-y-6"
+          >
+            <h4 className="text-lg font-bold text-white flex items-center gap-2">
+              <ChevronRight className="w-5 h-5 text-emerald-400" />
+              Get Involved
+            </h4>
+            <ul className="space-y-3">
+              {[
+                { label: "Join Our Community", href: "/join", color: "text-emerald-400" },
+                { label: "Volunteer Opportunities", href: "/volunteer", color: "text-amber-400" },
+                { label: "Make a Donation", href: "/donate", color: "text-pink-400" },
+                { label: "Prayer Support", href: "/pray", color: "text-purple-400" },
+                { label: "Partnership", href: "/partnership", color: "text-cyan-400" },
+              ].map((link) => (
+                <motion.li
+                  key={link.href}
+                  whileHover={{ x: 5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Link 
+                    href={link.href} 
+                    className={`flex items-center gap-2 text-slate-400 hover:${link.color} transition-colors duration-300 group`}
+                  >
+                    <div className={`w-1.5 h-1.5 rounded-full ${link.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                    <span className="flex-1">{link.label}</span>
+                  </Link>
+                </motion.li>
+              ))}
+            </ul>
+          </motion.div>
+
+          {/* Newsletter Column */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.4 }}
+            className="space-y-6"
+          >
+            <h4 className="text-lg font-bold text-white flex items-center gap-2">
+              <ChevronRight className="w-5 h-5 text-amber-400" />
+              Stay Updated
+            </h4>
+            <p className="text-slate-400 text-sm">
+              Subscribe to our newsletter for updates, events, and spiritual insights.
+            </p>
+            
+            <AnimatePresence mode="wait">
+              {subscribed ? (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="p-4 bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 border border-emerald-500/20 rounded-xl"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                    <span className="text-emerald-300 font-medium">
+                      Thank you for subscribing!
+                    </span>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.form
+                  key="form"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  onSubmit={handleSubscribe}
+                  className="space-y-4"
+                >
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                    <input
+                      type="email"
+                      placeholder="Your email address"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none transition-all duration-300 placeholder-slate-500"
+                      required
+                    />
+                  </div>
+                  <motion.button
+                    type="submit"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full group relative overflow-hidden bg-gradient-to-r from-red-500 to-red-600 text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      Subscribe
+                      <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </span>
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-700"
+                      initial={{ x: "-100%" }}
+                      whileHover={{ x: "0%" }}
+                      transition={{ duration: 0.4 }}
+                    />
+                  </motion.button>
+                </motion.form>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </div>
+
+        {/* Contact Info Bar */}
+      
+
+        {/* Bottom Bar */}
+        <div className="border-t border-white/10 pt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            {/* Copyright */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.7 }}
+              className="text-center md:text-left"
+            >
+              <p className="text-slate-500 text-sm">
+                &copy; {currentYear} EvaSUE in Ethiopia Christian Student Fellowship.
+              </p>
+              <p className="text-slate-600 text-xs mt-1">
+                Transforming campuses, impacting eternity.
+              </p>
+            </motion.div>
+
+            {/* Additional Links */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.8 }}
+              className="flex flex-wrap gap-6 justify-center"
+            >
+              {[
+                { label: "Privacy Policy", href: "/privacy" },
+                { label: "Terms of Service", href: "/terms" },
+                { label: "FAQs", href: "/faq" },
+                { label: "Sitemap", href: "/sitemap" },
+              ].map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="text-slate-500 hover:text-sky-400 text-sm transition-colors duration-300"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </motion.div>
+
+            {/* Prayer Button */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.9 }}
+            >
+              <Link
+                href="/pray"
+                className="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-white/20 to-white/20 border border-white/10 text-white/70 hover:text-purple-200 hover:border-red-400/30 transition-all duration-300"
+              >
+                <Cross className="w-4 h-4 group-hover:animate-pulse" />
+                <span className="text-sm font-medium">Pray With Us</span>
+              </Link>
+            </motion.div>
+          </div>
+
+          {/* Signature */}
+          
+        </div>
+      </div>
+
+      {/* Back to Top Button */}
+      
     </motion.footer>
   );
 };

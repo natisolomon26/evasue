@@ -15,8 +15,9 @@ export default function PageBanner({ title, subtitle, image }: PageBannerProps) 
       }}
     >
       {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-sky-900/50 via-sky-900/60 to-sky-900/50" />
-
+      <div className="absolute inset-0 bg-gradient-to-br from-sky-900/80 via-sky-800/70 to-sky-900/80" />
+        <div className="absolute inset-0 bg-gradient-to-t from-sky-950/70 via-transparent to-transparent" />
+        
       <div className="relative z-10 text-center px-6">
         <h1 className="text-3xl md:text-5xl font-bold drop-shadow-lg">
           {title}

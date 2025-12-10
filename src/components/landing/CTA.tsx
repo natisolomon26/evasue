@@ -104,15 +104,15 @@ export default function SubscribeBanner() {
               {/* Left: Text Content */}
               <div className="flex-1 text-center md:text-left">
                 <div className="flex items-center justify-center md:justify-start gap-3 mb-3">
-                  <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg">
+                  <div className="p-2 bg-gradient-to-r from-red-500 to-red-600 rounded-lg">
                     <Bell className="h-5 w-5 text-white" />
                   </div>
-                  <h2 className="text-xl md:text-2xl font-bold text-gray-900">
+                  <h2 className="text-xl md:text-2xl font-bold text-sky-800">
                     Stay in the Loop
                   </h2>
                 </div>
                 
-                <p className="text-gray-600 mb-0 md:mb-4">
+                <p className="text-sky-800 mb-0 md:mb-4">
                   Get event updates, announcements, and exclusive content delivered to your inbox
                 </p>
 
@@ -168,7 +168,7 @@ export default function SubscribeBanner() {
                         disabled={loading}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="relative px-5 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 overflow-hidden group disabled:opacity-70 disabled:cursor-not-allowed"
+                        className="relative px-5 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 overflow-hidden group disabled:opacity-70 disabled:cursor-not-allowed"
                       >
                         {loading ? (
                           <Loader2 className="h-5 w-5 animate-spin" />
@@ -276,7 +276,7 @@ export default function SubscribeBanner() {
         {/* Footer Note */}
         <div className="mt-4 text-center">
           <p className="text-sm text-gray-500">
-            Join <span className="font-semibold text-blue-600">5,000+</span> members • 
+            Join <span className="font-semibold text-blue-600">50,000+</span> members • 
             No spam • Unsubscribe anytime
           </p>
         </div>

@@ -40,9 +40,9 @@ export default function Location() {
 
   // Stats data for interactive display
   const stats = [
-    { number: "150+", label: "Campuses", color: "text-red-400" },
-    { number: "50,000+", label: "Students", color: "text-sky-400" },
-    { number: "50+", label: "Regions", color: "text-yellow-400" },
+    { number: "150+", label: "Campuses", color: "text-red-500" },
+    { number: "50,000+", label: "Students", color: "text-sky-500" },
+    { number: "50+", label: "Regions", color: "text-orange-500" },
   ];
 
   return (
@@ -109,7 +109,7 @@ export default function Location() {
           </div>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-sky-900 mb-4">
             Spreading Hope Across{" "}
-            <span className="bg-gradient-to-r from-red-600 to-sky-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
               Borders
             </span>
           </h2>
@@ -249,7 +249,7 @@ export default function Location() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: 0.4 }}
-                className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent p-6"
+                className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-sky-800/80 via-sky-900/90 to-transparent p-6"
               >
                 <div className="flex justify-between">
                   {stats.map((stat, index) => (

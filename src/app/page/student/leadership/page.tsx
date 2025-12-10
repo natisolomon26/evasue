@@ -1,4 +1,5 @@
 import BuildSkill from "@/components/student/leadership/BuildSkill";
+import LeadershipMinistry from "@/components/student/leadership/LeadershipMinistry";
 import MentorshipSection from "@/components/student/leadership/MentorshipSection";
 import ModelLeadership from "@/components/student/leadership/ModelLeadership";
 import SmallGroup from "@/components/student/leadership/SmallGroup";
@@ -13,12 +14,12 @@ export default function LeadershipPage() {
         subtitle="Raising Christ-like leaders for campus, church, and society"
         image="/images/bg3.JPG"
       />
-
-      <StudentLeadership />
+      <LeadershipMinistry />
+     
       <SmallGroup />
-      <MentorshipSection />
+    
       <ModelLeadership />
-      <BuildSkill />
+      
     </>
   );
 }
