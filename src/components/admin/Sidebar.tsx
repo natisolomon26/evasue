@@ -31,9 +31,10 @@ interface User {
 const navItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard, permissionKey: null, badge: null },
   { name: "Events", href: "/admin/events", icon: Calendar, permissionKey: "events", badge: "5" },
-  { name: "Emails", href: "/admin/email", icon: Calendar, permissionKey: "email", badge: "50" },
+  { name: "Emails", href: "/admin/email", icon: Calendar, permissionKey: "email", badge: null },
   { name: "Materials", href: "/admin/materials", icon: FileText, permissionKey: "materials", badge: null },
   { name: "Newsletter", href: "/admin/newsletter", icon: Mail, permissionKey: "newsletter", badge: "12" },
+  { name: "Website Content", href: "/admin/content", icon: Mail, permissionKey: "webcontent", badge: null },
   { name: "Users", href: "/admin/users", icon: Users, permissionKey: "users", badge: "3" },
   { name: "Analytics", href: "/admin/analytics", icon: BarChart3, permissionKey: "analytics", badge: null },
   { name: "Settings", href: "/admin/settings", icon: Settings, permissionKey: "settings", badge: null },

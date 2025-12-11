@@ -249,7 +249,7 @@ const LeadershipCard = ({
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
         transition={{ delay: delay + 0.4 }}
-        className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-gradient-to-br from-gray-800 to-gray-900 text-white flex items-center justify-center text-xs font-bold shadow-lg z-10"
+        className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-500 text-white flex items-center justify-center text-xs font-bold shadow-lg z-10"
       >
         <Crown className="w-3 h-3" />
       </motion.div>
@@ -507,16 +507,16 @@ export default function LeadershipMinistry() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.8 + index * 0.1 }}
-              className="flex items-center gap-4 p-4 rounded-xl bg-white/50 backdrop-blur-sm border border-red-100"
+              className="flex items-center gap-4 p-4 rounded-xl bg-white/50 backdrop-blur-sm border border-sky-100"
             >
-              <div className="p-2 rounded-lg bg-gradient-to-br from-red-500/10 to-red-500/10">
-                <div className="text-red-600">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-sky-500/10 to-sky-500/10">
+                <div className="text-sky-600">
                   {stat.icon}
                 </div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-red-700">{stat.value}</div>
-                <div className="text-sm text-red-600">{stat.label}</div>
+                <div className="text-2xl font-bold text-sky-700">{stat.value}</div>
+                <div className="text-sm text-sky-900">{stat.label}</div>
               </div>
             </motion.div>
           ))}

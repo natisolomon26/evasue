@@ -1,25 +1,26 @@
-// app/admin/email/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import EmailCard from "@/components/admin/email/EmailCard";
 import EmailTable from "@/components/admin/email/EmailTable";
 import EmailChart from "@/components/admin/email/EmailCharts";
-import EmailForm from "@/components/admin/email/EmailForm";
+import CampaignModal from "@/components/admin/email/campaign/CampaignModal";
 
 export default function AdminEmailPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [subscribersCount, setSubscribersCount] = useState(0);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const fetchData = async () => {
     const subsRes = await fetch("/api/subscribers");
     const subs = await subsRes.json();
     setSubscribersCount(subs.length);
 
-    const campRes = await fetch("/api/campaigns"); // create this API to list campaigns
-    const campData = await campRes.json();
-    setCampaigns(campData);
+    const res = await fetch("/api/campaign");
+    const data = await res.json();
+    const campaigns = Array.isArray(data.campaigns) ? data.campaigns : [];
+    setCampaigns(campaigns);
   };
 
   useEffect(() => {
@@ -33,23 +34,66 @@ export default function AdminEmailPage() {
     sent: c.sentTo.length,
   }));
 
+  // Handlers for modal actions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleSaveDraft = async (data: any) => {
+    await fetch("/api/campaign", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    setModalOpen(false);
+    fetchData();
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleSend = async (data: any) => {
+    await fetch("/api/campaign/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    setModalOpen(false);
+    fetchData();
+  };
+
   return (
     <div className="p-6 md:p-12 space-y-8">
       {/* Cards */}
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={() => setModalOpen(true)}
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
+        >
+          + Create Campaign
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <EmailCard title="Total Subscribers" value={subscribersCount} color="bg-blue-500" />
         <EmailCard title="Campaigns Sent" value={campaigns.length} color="bg-green-500" />
-        <EmailCard title="Total Emails Sent" value={campaigns.reduce((acc, c) => acc + c.sentTo.length, 0)} color="bg-purple-500" />
+        <EmailCard
+          title="Total Emails Sent"
+          value={campaigns.reduce((acc, c) => acc + c.sentTo.length, 0)}
+          color="bg-purple-500"
+        />
       </div>
 
       {/* Chart */}
       <EmailChart data={chartData} />
 
       {/* Send Form */}
-      <EmailForm onSent={fetchData} />
 
       {/* Campaign Table */}
       <EmailTable campaigns={campaigns} />
+
+      {/* Campaign Modal */}
+      <CampaignModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSaveDraft={handleSaveDraft}
+        onSend={handleSend}
+      />
     </div>
   );
 }
