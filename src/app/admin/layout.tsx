@@ -21,7 +21,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* Scrollable main content area */}
       <div className="flex-1 flex flex-col ml-0 md:ml-80 lg:ml-80">
         {/* This container scrolls independently */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-1">
           {children}
         </main>
       </div>
