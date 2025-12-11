@@ -14,9 +14,7 @@ import {
   Calendar
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import EmailCard from "@/components/admin/email/EmailCard";
 import EmailTable from "@/components/admin/email/EmailTable";
-import EmailChart from "@/components/admin/email/EmailCharts";
 import CampaignModal from "@/components/admin/email/campaign/CampaignModal";
 import ViewCampaignModal from "@/components/admin/email/campaign/ViewCampaignModal";
 import EditCampaignModal from "@/components/admin/email/campaign/EditCampaignModal";
@@ -196,7 +194,7 @@ export default function AdminEmailPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setModalOpen(true)}
-              className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-blue-600 transition-all duration-200 group"
+              className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow-lg hover:shadow-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 group"
             >
               <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-200" />
               Create Campaign

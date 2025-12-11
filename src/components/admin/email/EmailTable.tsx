@@ -53,7 +53,9 @@ export default function EmailTable({ campaigns, onView, onEdit, onDelete }: Emai
   // Sort campaigns
   const sortedCampaigns = useMemo(() => {
     return [...campaigns].sort((a, b) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let aValue: any = a[sortField as keyof Campaign];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let bValue: any = b[sortField as keyof Campaign];
 
       if (sortField === 'sentAt') {
