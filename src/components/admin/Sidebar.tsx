@@ -32,7 +32,7 @@ const navItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard, permissionKey: null, badge: null },
   { name: "Events", href: "/admin/events", icon: Calendar, permissionKey: "events", badge: "5" },
   { name: "Email Campaigns", href: "/admin/email", icon: Calendar, permissionKey: "email", badge: null },
-  { name: "Email Subscriptions", href: "/admin/email/subscription", icon: Calendar, permissionKey: "email", badge: null },
+  { name: "Email Subscriptions", href: "/admin/subscription", icon: Calendar, permissionKey: "subscription", badge: null },
   { name: "Materials", href: "/admin/materials", icon: FileText, permissionKey: "materials", badge: null },
   { name: "Newsletter", href: "/admin/newsletter", icon: Mail, permissionKey: "newsletter", badge: "12" },
   { name: "Website Content", href: "/admin/content", icon: Mail, permissionKey: "webcontent", badge: null },
