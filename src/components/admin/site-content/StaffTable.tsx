@@ -1,80 +1,83 @@
-// components/admin/site/StaffTable.tsx
-import { useState } from "react";
-import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
+"use client";
+
+import Image from "next/image";
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 interface Staff {
   _id: string;
   fullName: string;
   role: string;
   email: string;
-  image: string;
+  image?: string;
 }
 
 interface StaffTableProps {
   staffList: Staff[];
-  onEdit: (item: Staff) => void;
-  onDelete: () => void;
+  onEdit: (staff: Staff) => void;
+  onDelete: (staff: Staff) => void;
 }
 
 export default function StaffTable({ staffList, onEdit, onDelete }: StaffTableProps) {
-  const [page, setPage] = useState(1);
-  const pageSize = 5;
-
-  const totalPages = Math.ceil(staffList.length / pageSize);
-  const paginatedStaff = staffList.slice((page - 1) * pageSize, page * pageSize);
-
   return (
-    <div className="overflow-x-auto bg-white rounded-xl shadow-md p-4">
-      <table className="min-w-full text-left text-gray-800">
-        <thead className="border-b">
-          <tr>
-            <th className="px-4 py-2">Image</th>
-            <th className="px-4 py-2">Full Name</th>
-            <th className="px-4 py-2">Role</th>
-            <th className="px-4 py-2">Email</th>
-            <th className="px-4 py-2">Actions</th>
+    <div className="overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-200">
+      <table className="min-w-full text-sm text-gray-700">
+        <thead>
+          <tr className="bg-gray-50 text-gray-500 text-left">
+            <th className="px-5 py-4 font-medium">Photo</th>
+            <th className="px-5 py-4 font-medium">Full Name</th>
+            <th className="px-5 py-4 font-medium">Role</th>
+            <th className="px-5 py-4 font-medium">Email</th>
+            <th className="px-5 py-4 font-medium">Actions</th>
           </tr>
         </thead>
-        <tbody>
-          {paginatedStaff.map((staff) => (
-            <tr key={staff._id} className="border-b hover:bg-gray-100">
-              <td className="px-4 py-2">
-                <img src={staff.image} className="w-10 h-10 rounded-full object-cover" />
+        <tbody className="divide-y divide-gray-100">
+          {staffList.map((staff) => (
+            <tr
+              key={staff._id}
+              className="hover:bg-gray-50 transition-colors duration-150"
+            >
+              <td className="px-5 py-4">
+                {staff.image ? (
+                  <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200">
+                    <Image
+                      src={staff.image}
+                      alt={staff.fullName}
+                      width={40}
+                      height={40}
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 font-medium">
+                    {staff.fullName.charAt(0).toUpperCase()}
+                  </div>
+                )}
               </td>
-              <td className="px-4 py-2">{staff.fullName}</td>
-              <td className="px-4 py-2">{staff.role}</td>
-              <td className="px-4 py-2">{staff.email}</td>
-              <td className="px-4 py-2 flex gap-2">
-                <button onClick={() => onEdit(staff)} className="text-blue-600 hover:text-blue-800">
-                  <FaEdit />
+              <td className="px-5 py-4 font-medium text-gray-900">{staff.fullName}</td>
+              <td className="px-5 py-4 text-gray-600">{staff.role}</td>
+              <td className="px-5 py-4 text-gray-600">{staff.email}</td>
+              <td className="px-5 py-4 flex gap-3">
+                <button
+                  onClick={() => onEdit(staff)}
+                  className="p-1.5 text-blue-600 hover:text-blue-800 rounded-full hover:bg-blue-50 transition-colors duration-150"
+                  aria-label="Edit"
+                  title="Edit"
+                >
+                  <FaEdit size={14} />
                 </button>
-                <button onClick={onDelete} className="text-red-600 hover:text-red-800">
-                  <FaTrash />
+                <button
+                  onClick={() => onDelete(staff)}
+                  className="p-1.5 text-red-600 hover:text-red-800 rounded-full hover:bg-red-50 transition-colors duration-150"
+                  aria-label="Delete"
+                  title="Delete"
+                >
+                  <FaTrash size={14} />
                 </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-
-      {/* Pagination */}
-      <div className="mt-2 flex justify-end gap-2">
-        <button
-          onClick={() => setPage((p) => Math.max(p - 1, 1))}
-          disabled={page === 1}
-          className="px-3 py-1 bg-gray-200 rounded"
-        >
-          Prev
-        </button>
-        <span className="px-2 py-1">{page} / {totalPages}</span>
-        <button
-          onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-          disabled={page === totalPages}
-          className="px-3 py-1 bg-gray-200 rounded"
-        >
-          Next
-        </button>
-      </div>
     </div>
   );
 }

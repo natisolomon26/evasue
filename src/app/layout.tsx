@@ -2,8 +2,8 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-// Import the new wrapper component
 import LayoutWrapper from '@/components/layout/LayoutWrapper'; 
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -32,6 +32,7 @@ export default function RootLayout({
         {/* Pass children to the new LayoutWrapper */}
         <LayoutWrapper>
           {children}
+          <Toaster position="top-right" />
         </LayoutWrapper>
       </body>
     </html>

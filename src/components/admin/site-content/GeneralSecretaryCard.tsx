@@ -25,7 +25,7 @@ export default function GeneralSecretaryCard({ gs }: GeneralSecretaryCardProps) 
       <div>
         <h3 className="text-lg font-bold">{gs.fullName}</h3>
         <p className="text-sm">{gs.role}</p>
-        <p className="mt-2 text-sm">{gs.description}</p>
+       
       </div>
     </div>
   );

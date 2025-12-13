@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   LayoutDashboard, Calendar, FileText, Mail, Users, Settings, X, Menu,
-  ChevronRight, LogOut, Bell, Shield, BarChart3
+  ChevronRight, LogOut, Bell, Shield, BarChart3, VideoIcon
 } from "lucide-react";
 
 interface SidebarProps {
@@ -36,6 +36,7 @@ const navItems = [
   { name: "Materials", href: "/admin/materials", icon: FileText, permissionKey: "materials", badge: null },
   { name: "Newsletter", href: "/admin/newsletter", icon: Mail, permissionKey: "newsletter", badge: "12" },
   { name: "Website Content", href: "/admin/site-content", icon: Mail, permissionKey: "webcontent", badge: null },
+  { name: "Videos", href: "/admin/video", icon: VideoIcon, permissionKey: "video", badge: null },
   { name: "Users", href: "/admin/users", icon: Users, permissionKey: "users", badge: "3" },
   { name: "Analytics", href: "/admin/analytics", icon: BarChart3, permissionKey: "analytics", badge: null },
   { name: "Settings", href: "/admin/settings", icon: Settings, permissionKey: "settings", badge: null },
