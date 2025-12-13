@@ -1,24 +1,27 @@
-// src/app/api/materials/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/mongoose";
-import Material from "@/models/Materials";
-import { authMiddleware } from "@/lib/authMiddleware";
+import { NextResponse } from "next/server";
+import { connectDB } from "@/lib/db";
+import Materials from "@/models/Materials";
 
+export async function GET() {
+  await connectDB();
+  const materials = await Materials.find({ isPublished: true }).sort({ createdAt: -1 });
+  return NextResponse.json({ data: materials });
+}
 
-export async function POST(req: NextRequest) {
-  await connectToDatabase();
+export async function POST(req: Request) {
+  try {
+    await connectDB();
+    const body = await req.json();
 
-  const user = authMiddleware(req, true); // admin only
-  if (user instanceof NextResponse) return user; // blocked
+    const { title, fileUrl, fileType, category } = body;
+    if (!title || !fileUrl || !fileType) {
+      return NextResponse.json({ message: "Missing fields" }, { status: 400 });
+    }
 
-  const { title, description, fileUrl } = await req.json();
-
-  const material = await Material.create({
-    title,
-    description,
-    fileUrl,
-    createdBy: user.id,
-  });
-
-  return NextResponse.json({ message: "Material created", material }, { status: 201 });
+    const material = await Materials.create(body);
+    return NextResponse.json({ success: true, data: material }, { status: 201 });
+  } catch (error) {
+    console.error("POST MATERIAL ERROR:", error);
+    return NextResponse.json({ message: "Failed to create material" }, { status: 500 });
+  }
 }
