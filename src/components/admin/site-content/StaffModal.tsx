@@ -323,7 +323,7 @@ export default function StaffModal({ open, item, onClose, onSave }: StaffModalPr
                   }`}
                 >
                   <option value="">Select a role</option>
-                  <option value="Manager">Manager</option>
+                  <option value="Manager">Managers</option>
                   <option value="Developer">Developer</option>
                   <option value="Designer">Designer</option>
                   <option value="Marketing">Marketing</option>
