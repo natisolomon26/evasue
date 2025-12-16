@@ -327,7 +327,7 @@ export default function StaffModal({ open, item, onClose, onSave }: StaffModalPr
                   <option value="Developer">Developer</option>
                   <option value="Designer">Designer</option>
                   <option value="Marketing">Marketing</option>
-                  <option value="Support">Support</option>
+                  <option value="staffs">staffs</option>
                   <option value="Other">Other</option>
                 </select>
                 {errors.role && (
