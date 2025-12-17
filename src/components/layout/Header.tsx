@@ -49,7 +49,7 @@ export default function Header() {
       subMenu: [
         { label: "Staff Cares & Development", link: "/staff" },
         { label: "Evangelism and Mission", link: "/student/evangelism" },
-        { label: "Media Team", link: "/student/evangelism" },
+        { label: "Media Team", link: "/page/department/media" },
       ],
     },
     {
