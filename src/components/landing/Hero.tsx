@@ -198,7 +198,7 @@ export default function Hero() {
                 transition={{ duration: 2, repeat: Infinity }}
               />
               <span className="text-sm font-medium text-white tracking-wider">
-                ADVANCE KINGDOM OF GOD
+                ADVANCING KINGDOM OF GOD
               </span>
             </div>
           </motion.div>
