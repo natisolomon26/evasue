@@ -1,47 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
-import Registration from '@/models/Registration';
-import Seminar from '@/models/Seminar';
 import { Types } from 'mongoose';
+import SeminarRegistration from '@/models/SeminarRegistration';
+import Seminar from '@/models/Seminar';
 
-// GET all registrations with seminar details
+
 export async function GET(request: NextRequest) {
+  await connectDB();
+
   try {
-    await connectDB();
-    
-    const searchParams = request.nextUrl.searchParams;
+    const { searchParams } = request.nextUrl;
+
     const seminarId = searchParams.get('seminarId');
     const status = searchParams.get('status');
-    
-    // eslint-disable-next-line prefer-const
-    let query: any = {};
-    
+    const phoneNumber = searchParams.get('phoneNumber');
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const query: any = {};
+
     if (seminarId) {
       if (!Types.ObjectId.isValid(seminarId)) {
         return NextResponse.json(
-          { success: false, error: 'Invalid seminar ID' },
+          { success: false, error: 'Invalid seminarId' },
           { status: 400 }
         );
       }
       query.seminarId = seminarId;
     }
-    
+
     if (status) {
       query.status = status;
     }
-    
-    const registrations = await Registration.find(query)
-      .populate('seminarId', 'title date location instructor')
-      .sort({ registrationDate: -1 })
+
+    if (phoneNumber) {
+      query.phoneNumber = phoneNumber;
+    }
+
+    const registrations = await SeminarRegistration.find(query)
+      .populate('seminarId', 'title date location')
+      .sort({ createdAt: -1 })
       .lean();
-    
-    return NextResponse.json({ 
-      success: true, 
+
+    return NextResponse.json({
+      success: true,
       count: registrations.length,
-      data: registrations 
+      data: registrations,
     });
+
   } catch (error) {
-    console.error('Error fetching registrations:', error);
+    console.error('Error fetching seminar registrations:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch registrations' },
       { status: 500 }
@@ -49,144 +56,86 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST create new registration
+
 export async function POST(request: NextRequest) {
-  const session = await connectDB();
-  let transactionSuccess = false;
-  
+  await connectDB();
+
   try {
     const body = await request.json();
-    
-    // Validate required fields
-    const requiredFields = ['seminarId', 'fullName', 'phoneNumber'];
-    for (const field of requiredFields) {
-      if (!body[field]) {
-        return NextResponse.json(
-          { success: false, error: `${field} is required` },
-          { status: 400 }
-        );
-      }
+    const { seminarId, fullName, phoneNumber, email } = body;
+
+    if (!seminarId || !fullName || !phoneNumber) {
+      return NextResponse.json(
+        { success: false, error: 'seminarId, fullName, phoneNumber are required' },
+        { status: 400 }
+      );
     }
-    
-    if (!Types.ObjectId.isValid(body.seminarId)) {
+
+    if (!Types.ObjectId.isValid(seminarId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid seminar ID' },
         { status: 400 }
       );
     }
-    
-    // Start transaction
-    const session = await mongoose.startSession();
-    session.startTransaction();
-    
-    try {
-      // Check if seminar exists and is open
-      const seminar = await Seminar.findById(body.seminarId).session(session);
-      
-      if (!seminar) {
-        await session.abortTransaction();
-        return NextResponse.json(
-          { success: false, error: 'Seminar not found' },
-          { status: 404 }
-        );
-      }
-      
-      if (!seminar.isOpen) {
-        await session.abortTransaction();
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: 'Seminar registration is closed',
-            isFull: seminar.currentRegistrations >= seminar.capacity
-          },
-          { status: 400 }
-        );
-      }
-      
-      // Check for duplicate registration
-      const existingRegistration = await Registration.findOne({
-        seminarId: body.seminarId,
-        phoneNumber: body.phoneNumber,
-        status: { $ne: 'cancelled' },
-      }).session(session);
-      
-      if (existingRegistration) {
-        await session.abortTransaction();
-        return NextResponse.json(
-          { success: false, error: 'Already registered for this seminar' },
-          { status: 400 }
-        );
-      }
-      
-      // Check capacity
-      const registrationCount = await Registration.countDocuments({
-        seminarId: body.seminarId,
-        status: { $ne: 'cancelled' },
-      }).session(session);
-      
-      if (registrationCount >= seminar.capacity) {
-        // Update seminar to closed
-        await Seminar.findByIdAndUpdate(
-          body.seminarId,
-          { isOpen: false },
-          { session }
-        );
-        
-        await session.abortTransaction();
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: 'Seminar is full',
-            isFull: true 
-          },
-          { status: 400 }
-        );
-      }
-      
-      // Create registration
-      const registration = await Registration.create([{
-        seminarId: body.seminarId,
-        fullName: body.fullName,
-        phoneNumber: body.phoneNumber,
-        email: body.email,
-        notes: body.notes,
-        status: 'confirmed',
-      }], { session });
-      
-      // Update seminar registration count
-      await Seminar.findByIdAndUpdate(
-        body.seminarId,
-        { 
-          $inc: { currentRegistrations: 1 },
-          isOpen: registrationCount + 1 < seminar.capacity,
-        },
-        { session }
-      );
-      
-      await session.commitTransaction();
-      transactionSuccess = true;
-      
+
+    const seminar = await Seminar.findById(seminarId);
+    if (!seminar) {
       return NextResponse.json(
-        { success: true, data: registration[0] },
-        { status: 201 }
+        { success: false, error: 'Seminar not found' },
+        { status: 404 }
       );
-    } catch (error) {
-      await session.abortTransaction();
-      throw error;
-    } finally {
-      session.endSession();
     }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    console.error('Error creating registration:', error);
-    
-    if (error.code === 11000) {
+
+    if (!seminar.isOpen) {
       return NextResponse.json(
-        { success: false, error: 'Already registered for this seminar' },
+        { success: false, error: 'Registration closed' },
         { status: 400 }
       );
     }
-    
+
+    const existing = await SeminarRegistration.findOne({
+      seminarId,
+      phoneNumber,
+      status: 'confirmed',
+    });
+
+    if (existing) {
+      return NextResponse.json(
+        { success: false, error: 'Already registered' },
+        { status: 400 }
+      );
+    }
+
+    const registration = new SeminarRegistration({
+      seminarId,
+      fullName,
+      phoneNumber,
+      email,
+    });
+
+    await registration.save();
+
+    await Seminar.findByIdAndUpdate(seminarId, {
+      $inc: { currentRegistrations: 1 },
+      isOpen: seminar.currentRegistrations + 1 < seminar.capacity,
+    });
+
+    return NextResponse.json(
+      { success: true, data: registration },
+      { status: 201 }
+    );
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    console.error('Error creating registration:', error);
+
+    if (error.code === 11000) {
+      return NextResponse.json(
+        { success: false, error: 'Already registered' },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
       { success: false, error: 'Failed to create registration' },
       { status: 500 }

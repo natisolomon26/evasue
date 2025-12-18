@@ -1,136 +1,86 @@
 import { NextRequest, NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import { connectDB } from '@/lib/db';
-import Registration from '@/models/Registration';
-import Seminar from '@/models/Seminar';
-import { Types } from 'mongoose';
+import SeminarRegistration from '@/models/SeminarRegistration';
 
-interface Params {
-  params: { id: string };
-}
-
-// GET single registration
-export async function GET(request: NextRequest, { params }: Params) {
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  await connectDB();
   try {
-    await connectDB();
-    
-    if (!Types.ObjectId.isValid(params.id)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid registration ID' },
-        { status: 400 }
-      );
+    const { id } = await context.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ success: false, error: 'Invalid registration ID' }, { status: 400 });
     }
-    
-    const registration = await Registration.findById(params.id)
-      .populate('seminarId', 'title date location instructor capacity')
+
+    const registration = await SeminarRegistration.findById(id)
+      .populate('seminarId', 'title date location')
       .lean();
-    
+
     if (!registration) {
-      return NextResponse.json(
-        { success: false, error: 'Registration not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Registration not found' }, { status: 404 });
     }
-    
+
     return NextResponse.json({ success: true, data: registration });
   } catch (error) {
     console.error('Error fetching registration:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch registration' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Failed to fetch registration' }, { status: 500 });
   }
 }
 
-// PUT update registration (e.g., cancel registration)
-export async function PUT(request: NextRequest, { params }: Params) {
-  const session = await connectDB();
-  
+export async function PUT(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  await connectDB();
   try {
-    await connectDB();
-    
-    if (!Types.ObjectId.isValid(params.id)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid registration ID' },
-        { status: 400 }
-      );
-    }
-    
+    const { id } = await context.params;
     const body = await request.json();
-    
-    // If canceling registration, update seminar capacity
-    if (body.status === 'cancelled') {
-      const session = await mongoose.startSession();
-      session.startTransaction();
-      
-      try {
-        const registration = await Registration.findById(params.id).session(session);
-        
-        if (!registration) {
-          await session.abortTransaction();
-          return NextResponse.json(
-            { success: false, error: 'Registration not found' },
-            { status: 404 }
-          );
-        }
-        
-        // Only update if not already cancelled
-        if (registration.status !== 'cancelled') {
-          // Update seminar capacity
-          await Seminar.findByIdAndUpdate(
-            registration.seminarId,
-            { 
-              $inc: { currentRegistrations: -1 },
-              isOpen: true, // Reopen if capacity allows
-            },
-            { session }
-          );
-        }
-        
-        // Update registration status
-        const updatedRegistration = await Registration.findByIdAndUpdate(
-          params.id,
-          { 
-            status: 'cancelled',
-            notes: body.notes || `Cancelled on ${new Date().toISOString()}`,
-          },
-          { new: true, session }
-        );
-        
-        await session.commitTransaction();
-        
-        return NextResponse.json({ 
-          success: true, 
-          data: updatedRegistration,
-          message: 'Registration cancelled successfully' 
-        });
-      } catch (error) {
-        await session.abortTransaction();
-        throw error;
-      } finally {
-        session.endSession();
-      }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ success: false, error: 'Invalid registration ID' }, { status: 400 });
     }
-    
-    // For other updates
-    const registration = await Registration.findByIdAndUpdate(
-      params.id,
-      body,
+
+    const updated = await SeminarRegistration.findByIdAndUpdate(
+      id,
+      { ...body, updatedAt: new Date() },
       { new: true, runValidators: true }
     );
-    
-    if (!registration) {
-      return NextResponse.json(
-        { success: false, error: 'Registration not found' },
-        { status: 404 }
-      );
+
+    if (!updated) {
+      return NextResponse.json({ success: false, error: 'Registration not found' }, { status: 404 });
     }
-    
-    return NextResponse.json({ success: true, data: registration });
+
+    return NextResponse.json({ success: true, data: updated });
   } catch (error) {
     console.error('Error updating registration:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to update registration' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Failed to update registration' }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  await connectDB();
+  try {
+    const { id } = await context.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ success: false, error: 'Invalid registration ID' }, { status: 400 });
+    }
+
+    const deleted = await SeminarRegistration.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return NextResponse.json({ success: false, error: 'Registration not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, message: 'Registration deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting registration:', error);
+    return NextResponse.json({ success: false, error: 'Failed to delete registration' }, { status: 500 });
   }
 }

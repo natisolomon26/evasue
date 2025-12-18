@@ -57,7 +57,8 @@ export default function Header() {
       subMenu: [
         { label: "Training", link: "/page/material" },
         { label: "Events", link: "/page/events" },
-        { label: "Videos", link: "/page/videos" }
+        { label: "Videos", link: "/page/videos" },
+        { label: "seminars", link: "/page/seminars" }
       ],
     },
     { label: "Contact", link: "/contact" },

@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import LayoutWrapper from '@/components/layout/LayoutWrapper'; 
 import { Toaster } from "react-hot-toast";
+import { QueryProvider } from '@/providers/QueryProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -30,10 +31,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         {/* Pass children to the new LayoutWrapper */}
+        <QueryProvider>
         <LayoutWrapper>
           {children}
           <Toaster position="top-right" />
         </LayoutWrapper>
+        </QueryProvider>
       </body>
     </html>
   );
